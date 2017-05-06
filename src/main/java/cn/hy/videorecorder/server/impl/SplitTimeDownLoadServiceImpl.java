@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +20,6 @@ import cn.hy.videorecorder.utils.TimeUtils;
 
 @Service("splitTimeDownLoadService")
 public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
-
-	@Value("${download.haikang.downloadTimeSplitSec}")
-	private Integer haikangDownloadTimeSplitSec;
 	
 	@Autowired @Qualifier("downloadTaskSchdule")
 	private DownloadTaskSchdule downloadTaskSchdule;
@@ -59,8 +55,6 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 		try {
 			switch (vodParam.getMonitorEntity().getVrUserType()) {
 				case 海康:
-					//切片时长
-					vodParam.setSplitSecStep(haikangDownloadTimeSplitSec);
 					fixedThreadPool.submit(new HaiKangServerImpl(vodParam,downloadTaskSchdule));
 					break;
 				case 大华:

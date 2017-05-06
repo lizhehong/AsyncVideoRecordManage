@@ -1,13 +1,11 @@
 package cn.hy.videorecorder.ctr.rest;
 
-import java.io.File;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
@@ -26,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import cn.hy.haikang.type.DownLoadState;
-import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.entity.type.CallType;
@@ -38,9 +34,8 @@ import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 import cn.hy.videorecorder.repository.MonitorRepository;
 import cn.hy.videorecorder.resp.MonitorResp;
 import cn.hy.videorecorder.resp.type.MonitorRespMessage;
+import cn.hy.videorecorder.server.MonitorServer;
 import cn.hy.videorecorder.server.PullEndpointClientServer;
-import cn.hy.videorecorder.server.SplitTimeDownLoadService;
-import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
@@ -53,11 +48,8 @@ public class MonitorCtr {
 	@Autowired @Qualifier("pullEndpointClientServer")
 	private PullEndpointClientServer pullEndpointClientServer;
 	
-	@Autowired @Qualifier("splitTimeDownLoadService")
-	private SplitTimeDownLoadService splitTimeDownLoadService;
-	
-	@Value("${download.path}")
-	private String downLoadPath;
+	@Autowired @Qualifier("monitorServer")
+	private MonitorServer monitorServer;
 	
 	@PostMapping("monitor")
 	@ApiOperation(value = "创建视频", notes = "")
@@ -146,24 +138,8 @@ public class MonitorCtr {
 	@PostMapping("monitor/publish_vod")
 	public VodParam publishVodMonitor(
 			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
-		MonitorEntity monitorEntity = monitorInfoRepository.findOne(vodMonitorForm.getMonitorId());
 		
-		VodParam vodParam = new VodParam();
-		
-		QueryTimeParam queryTimeParam = new QueryTimeParam();
-		queryTimeParam.setDownLoadState(DownLoadState.未下载);
-		queryTimeParam.setEndTime(vodMonitorForm.getEndTime());
-		queryTimeParam.setStartTime(vodMonitorForm.getStartTime());
-		queryTimeParam.setFile(new File(downLoadPath+"\\"+monitorEntity.getId()));
-		
-		vodParam.setTime(queryTimeParam);
-		vodParam.setMonitorEntity(monitorEntity);
-		//优先切片让前端可以知道
-		splitTimeDownLoadService.createTimeSplitTask(vodParam);
-		//异步执行开始任务
-		splitTimeDownLoadService.startTask(vodParam);
-		QueryTimeParamUtils.storgeInfo(queryTimeParam.getFile(), vodParam);
-		return vodParam;
+		return monitorServer.startDownLoadActionToVod(vodMonitorForm);
 		
 	}
 	@ApiOperation(value = "发布一个直播视频(ip,通道,类型)", notes = "如果重复 则 拿第一个")
