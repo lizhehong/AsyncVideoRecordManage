@@ -12,7 +12,7 @@ public class QueryTimeParam {
 	private Date StartTime;
 	
 	private Date endTime;
-
+	
 	private File file;
 	
 	private DownLoadState downLoadState;
