@@ -29,13 +29,14 @@ public class QueryTimeParamUtils {
 			String fileName =  file.getName();
 			
 			fileName = fileName.substring(0,fileName.lastIndexOf("."))+".flv";
-			//TODO 日志等级 调节 输出内容 则可以避免创建接收输出减少系统压力
+			//TODO 禁止输出减少 进程缓冲器不会溢出
 			//全速转码
 			String command = "ffmpeg -y -i " +
 			
 							file.getAbsolutePath() +
 							
-							" -c:v copy -an -f flv " +
+							" -c:v libx264 -b:v 128k -r 15 -loglevel quiet -an -f flv "+
+							//" -c:v copy -loglevel quiet -an -f flv " +
 							
 							file.getParentFile().getAbsolutePath()+
 							

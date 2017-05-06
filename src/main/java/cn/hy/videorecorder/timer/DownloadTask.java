@@ -2,6 +2,9 @@ package cn.hy.videorecorder.timer;
 
 import java.util.concurrent.Callable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.IntByReference;
 
@@ -14,6 +17,8 @@ import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 
 public class DownloadTask implements  Callable<DownloadTask> {
 
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	
 	private HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
 	
 	/**
@@ -61,6 +66,7 @@ public class DownloadTask implements  Callable<DownloadTask> {
     			if(flag){
     				FFmpegProcess fFmpegProcess = QueryTimeParamUtils.transcoding(timeParm);
     				if( fFmpegProcess != null ){
+    					logger.info("{}：下载完毕进行转码,{}",timeParm.getFile().getAbsolutePath(),timeParm.getFile().getAbsolutePath());
     					fFmpegProcess.getProcess().waitFor();//等待转换完畢
     					fFmpegProcess.getProcess().destroyForcibly();
     					fFmpegProcess.getErrorGobbler().destroy();
