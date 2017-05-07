@@ -18,7 +18,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name="async_vrm_monitor_conn")
+@Table(name="async_vrm_serviceconn")
 public class MonitorClientServiceConnectionEntity implements Serializable{
 
 	
@@ -33,6 +33,8 @@ public class MonitorClientServiceConnectionEntity implements Serializable{
 			@Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy") })
 	private String id;
 		
+	private String name;
+	
 	@CreationTimestamp
 	private Date publishTime;
 	
