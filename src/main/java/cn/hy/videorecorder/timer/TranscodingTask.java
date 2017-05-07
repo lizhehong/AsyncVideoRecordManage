@@ -9,6 +9,7 @@ import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
+import lombok.Data;
 
 public class TranscodingTask implements  Runnable {
 
@@ -29,6 +30,15 @@ public class TranscodingTask implements  Runnable {
 		this.cmd = cmd;
 		this.queryTimeParam = queryTimeParam;
 		this.vodParam = vodParam;
+	}
+	
+	public QueryTimeParam getQueryTimeParam() {
+		return queryTimeParam;
+	}
+
+
+	public VodParam getVodParam() {
+		return vodParam;
 	}
 
 	@Override
@@ -56,6 +66,11 @@ public class TranscodingTask implements  Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "TranscodingTask [queryTimeParam=" + queryTimeParam + "]";
 	}
 
 }

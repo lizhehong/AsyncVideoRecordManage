@@ -1,7 +1,16 @@
 package cn.hy.videorecorder.server.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import cn.hy.videorecorder.timer.TranscodingTask;
@@ -18,13 +27,45 @@ public class TranscodingServerImpl {
 	 */
 	private final int poolSize = 2;
 	
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	ExecutorService executorService = Executors.newFixedThreadPool(poolSize);
 	
+	private List<TranscodingTask> transcodingTasks = new ArrayList<>();	
+	
 	public void addRunCmd(TranscodingTask transcodingTask){
 		
-		executorService.execute(transcodingTask);
+		//这里其实有一部分逻辑
+		//对于客户来说其实既然是时间段点播 那么最近的时间段才是他想要的 它不在乎其他的下载进度 也就是转码进度
+		transcodingTasks.add(transcodingTask);
 		
+		
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Scheduled(fixedDelay=2000)
+	public void  arrangeTranscodingTask(){
+		Comparator<TranscodingTask> c = new Comparator(){
+
+			@Override
+			public int compare(Object a0, Object a1) {
+				TranscodingTask t1 = (TranscodingTask) a0;  
+				TranscodingTask t2 = (TranscodingTask) a1;  
+				long t1StartTime = t1.getQueryTimeParam().getStartTime().getTime();
+				long t2StartTime = t2.getQueryTimeParam().getStartTime().getTime();
+				return (int) (t1StartTime - t2StartTime);
+			}         
+		};
+		Collections.sort(transcodingTasks,c);
+		logger.info("排序后：{}",transcodingTasks);
+		
+		Iterator<TranscodingTask> iterator = transcodingTasks.iterator();
+		//进行转码
+		while(iterator.hasNext()){
+			executorService.execute(iterator.next());
+			iterator.remove();
+		}
 	}
 	
 }

@@ -52,6 +52,21 @@ public class DownloadTask implements  Callable<DownloadTask> {
 		this.timeParm = timeParm;
 		this.transcodingServer = transcodingServer;
 	}
+	
+	
+	
+	public VodParam getVodParam() {
+		return vodParam;
+	}
+
+
+
+	public QueryTimeParam getTimeParm() {
+		return timeParm;
+	}
+
+
+
 	/**
 	 * 返回非空 说明 需要继续执行(轮训下载进度)
 	 */

@@ -1,5 +1,7 @@
 package cn.hy.videorecorder.schdule;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.timer.DownloadTask;
 
 @Service("downloadTaskSchdule")
@@ -26,11 +32,19 @@ public class DownloadTaskSchdule {
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
+	private ObjectMapper objectMapper = new ObjectMapper();
+	
 	/**
 	 * 添加并行任务进程
 	 * @param runnable
 	 */
 	public void addDownloadTask(DownloadTask downloadTask){
+		//拿到当前需要下载的时间片段
+		QueryTimeParam timeParam =  downloadTask.getTimeParm();
+		File localFile = new File(timeParam.getFile().getParentFile(),"index.json");
+		//TODO 检测是否下载 如果是则 无需进入
+	
+		
 		oldDownloadTasks.add(executorService.submit(downloadTask));
 	}
 	/**
@@ -40,7 +54,7 @@ public class DownloadTaskSchdule {
 	 * @throws ExecutionException 
 	 * @throws InterruptedException 
 	 */
-	@Scheduled(fixedDelay=1000)
+	@Scheduled(fixedDelay=300)
 	public void checkDownLoadTask() throws Exception{
 		long start = System.currentTimeMillis();
 		Iterator<Future<DownloadTask>> iterator = oldDownloadTasks.iterator();
