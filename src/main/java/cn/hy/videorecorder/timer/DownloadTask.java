@@ -4,15 +4,15 @@ import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.IntByReference;
 
 import cn.hy.haikang.config.HCNetSDK;
-import cn.hy.haikang.type.DownLoadState;
-import cn.hy.videorecorder.bo.FFmpegProcess;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
+import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 
 public class DownloadTask implements  Callable<DownloadTask> {
@@ -36,18 +36,24 @@ public class DownloadTask implements  Callable<DownloadTask> {
 	private QueryTimeParam timeParm;
 	
 	/**
-	 * 下载进度
+	 * 当前下载进度
 	 */
 	private int downLoadProgress;
 	
-	public DownloadTask(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm){
+	/**
+	 * 转码服务
+	 */
+	private TranscodingServerImpl transcodingServer;
+	
+	public DownloadTask(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm,TranscodingServerImpl transcodingServer){
 		super();
 		this.lFileHandle = lFileHandle;
 		this.vodParam = vodParam;
 		this.timeParm = timeParm;
+		this.transcodingServer = transcodingServer;
 	}
 	/**
-	 * 返回非空 说明 需要继续执行
+	 * 返回非空 说明 需要继续执行(轮训下载进度)
 	 */
 	@Override
 	public DownloadTask call() {
@@ -62,17 +68,12 @@ public class DownloadTask implements  Callable<DownloadTask> {
             	
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);
-            	
+            	//执行转码服务
     			if(flag){
-    				FFmpegProcess fFmpegProcess = QueryTimeParamUtils.transcoding(timeParm);
-    				if( fFmpegProcess != null ){
-    					logger.info("{}：下载完毕进行转码,{}",timeParm.getFile().getAbsolutePath(),timeParm.getFile().getAbsolutePath());
-    					fFmpegProcess.getProcess().waitFor();//等待转换完畢
-    					fFmpegProcess.getProcess().destroyForcibly();
-    					fFmpegProcess.getErrorGobbler().destroy();
-    					fFmpegProcess.getOutputGobbler().destroy();
-    					timeParm.setDownLoadState(DownLoadState.已经下载);
-    					QueryTimeParamUtils.storgeInfo(timeParm.getFile().getParentFile(),vodParam);
+    				logger.info("转码开始：{}",timeParm);
+    				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm);
+    				if(!StringUtils.isEmpty(ffmpegCmdStr)){
+    					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam));
     				}
     			}
     			return null;

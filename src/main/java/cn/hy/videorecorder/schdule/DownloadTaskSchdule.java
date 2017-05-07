@@ -20,9 +20,9 @@ public class DownloadTaskSchdule {
 
 	private List<Future<DownloadTask>> oldDownloadTasks = new ArrayList<>();
 	/**
-	 * 固定线程池
+	 * 固定线程池 同时监听N路下载
 	 */
-	private ExecutorService executorService = Executors.newFixedThreadPool(3);
+	private ExecutorService executorService = Executors.newFixedThreadPool(30);
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -40,21 +40,23 @@ public class DownloadTaskSchdule {
 	 * @throws ExecutionException 
 	 * @throws InterruptedException 
 	 */
-	@Scheduled(fixedDelay=1000*1)
-	public synchronized void checkDownLoadTask() throws Exception{
+	@Scheduled(fixedDelay=1000)
+	public void checkDownLoadTask() throws Exception{
+		long start = System.currentTimeMillis();
 		Iterator<Future<DownloadTask>> iterator = oldDownloadTasks.iterator();
 		List<Future<DownloadTask>> newDownloadTasks = new ArrayList<>();
 		while(iterator.hasNext()){
 			Future<DownloadTask> dFuture = iterator.next();
 			if(dFuture.isDone()){//保证任务执行完毕
 				DownloadTask downloadTask = dFuture.get();
-				iterator.remove();// 删除老任务
-				if(downloadTask != null)// 追加新任务
-					newDownloadTasks.add(executorService.submit(downloadTask));
+				iterator.remove();// 取消任务监听
+				if(downloadTask !=null)//本次监听下 还没有完成 下载任务需要下一次监听
+					newDownloadTasks.add((executorService.submit(downloadTask)));
 			}
 		}
-		//老任务的检测放到下一个轮回
-		oldDownloadTasks.addAll(newDownloadTasks);	
+		//老任务的检测放到下一个轮回	
+		oldDownloadTasks.addAll(newDownloadTasks);
+		logger.info("一轮检测下载任务运行时间：{},下次剩余监听量：{}",System.currentTimeMillis()-start,oldDownloadTasks.size());
 	}
 	
 }

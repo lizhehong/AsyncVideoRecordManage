@@ -15,6 +15,7 @@ import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.schdule.DownloadTaskSchdule;
 import cn.hy.videorecorder.server.StreamDownLoadServer;
+import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
 import cn.hy.videorecorder.timer.DownloadTask;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 
@@ -32,18 +33,20 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 	public static NativeLong userId = new NativeLong(-1);
 	
 	private DownloadTaskSchdule downloadTaskSchdule;
+
+	private TranscodingServerImpl transcodingServer;
 	
 	/**
 	 * 
 	 * @param vodParam 已经分隔好的
 	 */
-	public HaiKangServerImpl(VodParam vodParam,DownloadTaskSchdule downloadTaskSchdule) {
+	public HaiKangServerImpl(VodParam vodParam,DownloadTaskSchdule downloadTaskSchdule,TranscodingServerImpl transcodingServer) {
 		super();
 		this.vodParam = vodParam;
 		this.downloadTaskSchdule = downloadTaskSchdule;
+		this.transcodingServer = transcodingServer;
 		login();
 	}
-
 	
 	@Override
 	public void downLoadByTimeZone(QueryTimeParam timeParm) throws Exception {
@@ -55,18 +58,16 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 				timeParm.getFile().getAbsolutePath());
 		if (lPreviewHandle.intValue() < 0) {
 			timeParm.setDownLoadState(DownLoadState.未下载);
-			logger.warn("海康全局错误代码{},userId:{},channel:{},{}", hCNetSDK.NET_DVR_GetLastError(), userId,
-					vodParam.getMonitorEntity().getChannelNum(), "运行错误");
+			logger.warn("海康全局错误代码{},userId:{},channel:{},{},当前时间参数：{}", hCNetSDK.NET_DVR_GetLastError(), userId,
+					vodParam.getMonitorEntity().getChannelNum(), "运行错误",timeParm);
 			downLoadByTimeZone(timeParm);
 		} else {
-			
 			logger.warn("海康全局错误代码{},userId:{},channel:{},{}", hCNetSDK.NET_DVR_GetLastError(), userId,
 					vodParam.getMonitorEntity().getChannelNum(), "运行正确");
 			//下载必须执行这一行 才可以正常运行
 			hCNetSDK.NET_DVR_PlayBackControl(lPreviewHandle, HCNetSDK.NET_DVR_PLAYSTART, 0, null);
-			
 			//添加下载任务检测到 定时检测中
-			downloadTaskSchdule.addDownloadTask(new DownloadTask(lPreviewHandle,vodParam,timeParm));
+			downloadTaskSchdule.addDownloadTask(new DownloadTask(lPreviewHandle,vodParam,timeParm,transcodingServer));
 			
 			
 		}		

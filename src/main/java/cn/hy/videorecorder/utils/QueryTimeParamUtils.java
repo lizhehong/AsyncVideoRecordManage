@@ -9,8 +9,6 @@ import org.apache.commons.io.IOUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cn.hy.videorecorder.bo.FFmpegProcess;
-import cn.hy.videorecorder.bo.OutHandler;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.server.StreamDownLoadServer;
 
@@ -21,21 +19,21 @@ public class QueryTimeParamUtils {
 	/**
 	 * 文件转码
 	 * @param queryTimeParam
-	 * @return
+	 * @return ffmpeg cmd String
 	 */
-	public static FFmpegProcess transcoding(QueryTimeParam queryTimeParam){
+	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam){
 		try {
 			File file = queryTimeParam.getFile();
 			String fileName =  file.getName();
 			
 			fileName = fileName.substring(0,fileName.lastIndexOf("."))+".flv";
-			//TODO 禁止输出减少 进程缓冲器不会溢出
+			//TODO 禁止输出减少 进程缓冲器不会溢出 同时限制CPU使用率
 			//全速转码
 			String command = "ffmpeg -y -i " +
 			
 							file.getAbsolutePath() +
 							
-							" -c:v libx264 -b:v 128k -r 15 -loglevel quiet -an -f flv "+
+							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f flv "+
 							//" -c:v copy -loglevel quiet -an -f flv " +
 							
 							file.getParentFile().getAbsolutePath()+
@@ -44,16 +42,7 @@ public class QueryTimeParamUtils {
 
 			queryTimeParam.setFile(new File(file.getParentFile(),fileName));
 			
-			Process process = Runtime.getRuntime().exec(command);
-			
-			OutHandler outputGobbler = new OutHandler(process.getInputStream(), "Info");  
-			OutHandler errorGobbler = new OutHandler(process.getErrorStream(), "out");  
-			
-			
-			errorGobbler.start();  
-			outputGobbler.start();
-			
-			return new FFmpegProcess(process, outputGobbler, errorGobbler);
+			return command;
 			
 		} catch (Exception e) {
 			e.printStackTrace();

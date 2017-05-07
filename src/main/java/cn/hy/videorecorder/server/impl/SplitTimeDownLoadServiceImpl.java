@@ -24,8 +24,11 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	@Autowired @Qualifier("downloadTaskSchdule")
 	private DownloadTaskSchdule downloadTaskSchdule;
 	
+	@Autowired @Qualifier("transcodingServer")
+	private TranscodingServerImpl transcodingServer;
+	
 	/**
-	 * 固定线程数
+	 * 固定线程数 同时N个下载任务
 	 */
 	private ExecutorService fixedThreadPool = Executors.newFixedThreadPool(20);
 	
@@ -55,7 +58,8 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 		try {
 			switch (vodParam.getMonitorEntity().getVrUserType()) {
 				case 海康:
-					fixedThreadPool.submit(new HaiKangServerImpl(vodParam,downloadTaskSchdule));
+					//注入 下载进度轮训 下载后的转码服务
+					fixedThreadPool.submit(new HaiKangServerImpl(vodParam,downloadTaskSchdule,transcodingServer));
 					break;
 				case 大华:
 					break;
