@@ -84,7 +84,7 @@ public class DownloadTask implements  Callable<DownloadTask> {
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);
             	//执行转码服务
-    			if(flag){
+    			if(flag && transcodingServer != null){
     				logger.info("转码开始：{}",timeParm);
     				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm);
     				if(!StringUtils.isEmpty(ffmpegCmdStr)){

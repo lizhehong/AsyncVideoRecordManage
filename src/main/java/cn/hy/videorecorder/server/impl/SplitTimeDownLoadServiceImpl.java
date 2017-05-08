@@ -17,7 +17,11 @@ import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.schdule.DownloadTaskSchdule;
 import cn.hy.videorecorder.server.SplitTimeDownLoadService;
 import cn.hy.videorecorder.utils.TimeUtils;
-
+/**
+ * 分割视频点播视频时长 下载
+ * @author 李哲弘
+ *
+ */
 @Service("splitTimeDownLoadService")
 public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	
@@ -35,7 +39,7 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	
 	public void createTimeSplitTask(VodParam vodParam) throws Exception {
 		// 分割好的时间片段
-		List<QueryTimeParam> oldQueryTimeParams = TimeUtils.splitTime(vodParam.getTime(),
+		List<QueryTimeParam> oldQueryTimeParams = TimeUtils.fillFullMinAndSplitTime(vodParam.getTime(),
 				vodParam.getSplitSecStep());
 		for (int i = 0; i < oldQueryTimeParams.size(); i++) {
 			// 老的需要分割的时间

@@ -381,7 +381,7 @@ public interface HCNetSDK extends StdCallLibrary {
 	public static final int NET_DVR_GETTOTALFRAMES = 16;// 获取当前播放文件总的帧数(按文件回放的时候有效)
 	public static final int NET_DVR_GETTOTALTIME = 17;// 获取当前播放文件总的时间(按文件回放的时候有效)
 	public static final int NET_DVR_THROWBFRAME = 20;// 丢B帧
-	public static final int NET_DVR_SETSPEED = 24;// 设置码流速度
+	public static final int NET_DVR_SETSPEED = 24;// 设置码流速度(其实是下载速度)
 	public static final int NET_DVR_KEEPALIVE = 25;// 保持与设备的心跳(如果回调阻塞，建议2秒发送一次)
 	public static final int NET_DVR_SET_TRANS_TYPE = 32;//设置转码格式
 	public static final int NET_DVR_PLAY_CONVERT = 33;

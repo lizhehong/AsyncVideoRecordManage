@@ -15,43 +15,40 @@ public class TimeUtils {
 	private static  Logger logger = LoggerFactory.getLogger(TimeUtils.class);
 	
 	/**
-	 * 时间段平均分割
+	 * 填充整分钟再 时间段平均分割
 	 * 时间太长 可能会占用内存或者切割时间
 	 * @param queryTimeParam	查询时间
 	 * @param secondStep 		秒步长
 	 * @return
 	 */
-	public static List<QueryTimeParam> splitTime(QueryTimeParam queryTimeParam,int secondStep) {
+	public static List<QueryTimeParam> fillFullMinAndSplitTime(QueryTimeParam queryTimeParam,int secondStep) {
 		List<QueryTimeParam> queryTimeParams = new ArrayList<>();
 		if( queryTimeParam.getEndTime()!=null && queryTimeParam.getStartTime()!=null ){	
 			//时间节点化为整时
-			
+			Date startTime = null,endTime = null;
 			Calendar tmpCalendar = Calendar.getInstance();
 			tmpCalendar.setTime(queryTimeParam.getStartTime());
 			int sec = tmpCalendar.get(Calendar.SECOND);
 			if(sec > 0){
 				tmpCalendar.add(Calendar.SECOND, -sec);
-				queryTimeParam.setStartTime(tmpCalendar.getTime());
 			}
-			
+			startTime = tmpCalendar.getTime() ;
 			
 			tmpCalendar.setTime(queryTimeParam.getEndTime());
 			sec = tmpCalendar.get(Calendar.SECOND);
 			if(sec > 0){
 				tmpCalendar.add(Calendar.SECOND, -sec);
 				tmpCalendar.add(Calendar.MINUTE, 1);
-				queryTimeParam.setEndTime(tmpCalendar.getTime());
 			}
+			endTime = tmpCalendar.getTime();
 			
 			//得到時間差
-			Long timeLong = queryTimeParam.getEndTime().getTime() - queryTimeParam.getStartTime().getTime();
+			Long timeLong = endTime.getTime() - startTime.getTime();
 
 			//拿到切片个数
 			long num = (timeLong/(1000*secondStep));
 			logger.info("切片数：{},时长：{}",num,timeLong);
-			Date startTime = queryTimeParam.getStartTime();
-			
-			
+		
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(startTime);
 			if(num > 0){
@@ -66,13 +63,14 @@ public class TimeUtils {
 					queryTimeParams.add(newQueryTime);
 					startTime = calendar.getTime();//末尾时间作为第二次的开始时间
 				}
-//				if(!startTime.equals(queryTimeParam.getEndTime())){
-//					//最后的时长
-//					QueryTimeParam newQueryTime = new QueryTimeParam();
-//					newQueryTime.setStartTime(startTime);
-//					newQueryTime.setEndTime(queryTimeParam.getEndTime());
-//					queryTimeParams.add(newQueryTime);
-//				}
+				//防止步长不是整时倍
+				if(!startTime.equals(endTime)){
+					//最后的时长
+					QueryTimeParam newQueryTime = new QueryTimeParam();
+					newQueryTime.setStartTime(startTime);
+					newQueryTime.setEndTime(endTime);
+					queryTimeParams.add(newQueryTime);
+				}
 			}else {//不用切片的情况下
 				queryTimeParams.add(queryTimeParam);
 			}

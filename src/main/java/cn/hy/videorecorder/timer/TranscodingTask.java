@@ -60,7 +60,7 @@ public class TranscodingTask implements  Runnable {
 			//更新视频状态
 			queryTimeParam.setDownLoadState(DownLoadState.已经下载);
 			//固化内存信息
-			QueryTimeParamUtils.storgeInfo(vodParam.getTime().getFile(), vodParam);
+			QueryTimeParamUtils.storgeInfo(queryTimeParam.getFile().getParentFile(), vodParam);
 			
 			logger.info("转码成功：{},删除源文件：{}",queryTimeParam,orignFilePath);
 		} catch (Exception e) {

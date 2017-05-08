@@ -3,6 +3,7 @@ package cn.hy.videorecorder.entity;
 import java.io.Serializable;
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -59,5 +60,9 @@ public class MonitorEntity implements Serializable{
 	private CallType streamState;
 	
 	private RtspStreamType rtspStreamType;
-	
+	/**
+	 * 点播每秒视频大小
+	 */
+	@Column(name="vodsize_by_per_sec")
+	private Long VodsizeByperSec;
 }
