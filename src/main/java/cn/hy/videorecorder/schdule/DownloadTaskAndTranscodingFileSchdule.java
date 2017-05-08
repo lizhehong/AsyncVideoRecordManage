@@ -1,7 +1,6 @@
 package cn.hy.videorecorder.schdule;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -15,16 +14,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import cn.hy.videorecorder.bo.QueryTimeParam;
-import cn.hy.videorecorder.timer.DownloadTask;
+import cn.hy.videorecorder.timer.CallableI;
+import cn.hy.videorecorder.timer.DownLoadTaskAndSplitFileTranscoding;
+import cn.hy.videorecorder.timer.DownloadTaskAndBathTranscoding;
 
-@Service("downloadTaskSchdule")
-public class DownloadTaskSchdule {
+/**
+ * 检测下载进度 如果下载完毕 就去转码当前的视频
+ * @author Administrator
+ *
+ */
+@Service("downloadTaskAndTranscodingFileSchdule")
+public class DownloadTaskAndTranscodingFileSchdule implements DownLoadTranscoding<DownloadTaskAndBathTranscoding>{
 
-	private List<Future<DownloadTask>> oldDownloadTasks = new ArrayList<>();
+	private List<Future<DownloadTaskAndBathTranscoding>> oldDownloadTasks = new ArrayList<>();
 	/**
 	 * 固定线程池 同时监听N路下载
 	 */
@@ -32,13 +35,12 @@ public class DownloadTaskSchdule {
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
-	private ObjectMapper objectMapper = new ObjectMapper();
 	
 	/**
 	 * 添加并行任务进程
 	 * @param runnable
 	 */
-	public void addDownloadTask(DownloadTask downloadTask){
+	public void addDownloadTask(CallableI<DownloadTaskAndBathTranscoding> downloadTask){
 		//拿到当前需要下载的时间片段
 		QueryTimeParam timeParam =  downloadTask.getTimeParm();
 		File localFile = new File(timeParam.getFile().getParentFile(),"index.json");
@@ -57,12 +59,12 @@ public class DownloadTaskSchdule {
 	@Scheduled(fixedDelay=300)
 	public void checkDownLoadTask() throws Exception{
 		long start = System.currentTimeMillis();
-		Iterator<Future<DownloadTask>> iterator = oldDownloadTasks.iterator();
-		List<Future<DownloadTask>> newDownloadTasks = new ArrayList<>();
+		Iterator<Future<DownloadTaskAndBathTranscoding>> iterator = oldDownloadTasks.iterator();
+		List<Future<DownloadTaskAndBathTranscoding>> newDownloadTasks = new ArrayList<>();
 		while(iterator.hasNext()){
-			Future<DownloadTask> dFuture = iterator.next();
+			Future<DownloadTaskAndBathTranscoding> dFuture = iterator.next();
 			if(dFuture.isDone()){//保证任务执行完毕
-				DownloadTask downloadTask = dFuture.get();
+				DownloadTaskAndBathTranscoding downloadTask = dFuture.get();
 				iterator.remove();// 取消任务监听
 				if(downloadTask !=null)//本次监听下 还没有完成 下载任务需要下一次监听
 					newDownloadTasks.add((executorService.submit(downloadTask)));

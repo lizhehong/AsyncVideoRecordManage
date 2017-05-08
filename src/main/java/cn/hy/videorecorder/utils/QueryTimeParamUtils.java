@@ -3,6 +3,8 @@ package cn.hy.videorecorder.utils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -15,6 +17,40 @@ import cn.hy.videorecorder.server.StreamDownLoadServer;
 public class QueryTimeParamUtils {
 	
 	private static ObjectMapper objectMapper = new ObjectMapper();
+	
+	
+	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam,int secStep,String offsetDate){
+		try {
+			File file = queryTimeParam.getFile();
+			String fileName =  file.getName();
+			
+			fileName = fileName.substring(0,fileName.lastIndexOf("."))+".flv";
+			//TODO 禁止输出减少 进程缓冲器不会溢出 同时限制CPU使用率
+			//全速转码
+			String command = "ffmpeg -y "
+					
+							+ " -ss "+ offsetDate
+							
+							+ " -t "+ secStep +
+			
+							"-i " + file.getAbsolutePath() +
+							
+							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f flv "+
+							//" -c:v copy -loglevel quiet -an -f flv " +
+							
+							file.getParentFile().getAbsolutePath()+
+							
+							"\\"+fileName;
+
+			queryTimeParam.setFile(new File(file.getParentFile(),fileName));
+			
+			return command;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 	/**
 	 * 文件转码

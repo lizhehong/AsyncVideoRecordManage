@@ -11,18 +11,22 @@ import com.sun.jna.NativeLong;
 import cn.hy.haikang.config.HCNetSDK;
 import cn.hy.haikang.config.HCNetSDK.NET_DVR_DEVICEINFO_V30;
 import cn.hy.haikang.config.HCNetSDK.NET_DVR_TIME;
+import cn.hy.haikang.runnable.DownLoadWithSplitFileTask;
 import cn.hy.haikang.runnable.DownLoadWithSplitTimeTask;
 import cn.hy.haikang.type.DownLoadState;
 import cn.hy.haikang.utils.HaiKangConvertUtils;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.entity.MonitorEntity;
-import cn.hy.videorecorder.schdule.DownloadTaskSchdule;
+import cn.hy.videorecorder.schdule.DownLoadTranscoding;
+import cn.hy.videorecorder.schdule.DownloadTaskAndTranscodingFileSchdule;
+import cn.hy.videorecorder.schdule.DownloadTaskSplitFileTranscodingSchdule;
 import cn.hy.videorecorder.server.StreamDownLoadServer;
 import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
-import cn.hy.videorecorder.timer.DownloadTask;
+import cn.hy.videorecorder.timer.DownLoadTaskAndSplitFileTranscoding;
+import cn.hy.videorecorder.timer.DownloadTaskAndBathTranscoding;
 /**
- * 海康默认支持依据时间下载
+ * 海康默认支持依据时间下载(不使用时间分割器下载)
  * @author Administrator
  *
  */
@@ -39,24 +43,27 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 
 	public static NativeLong userId = new NativeLong(-1);
 	
-	private DownloadTaskSchdule downloadTaskSchdule;
+	private DownLoadTranscoding<DownLoadTaskAndSplitFileTranscoding> downLoadTranscoding;
 
 	private TranscodingServerImpl transcodingServer;
 	/**
 	 * 为海康提供另一种时间分割下载的方法
 	 */
-	public final Runnable DOWNLOAD_WITHSPLITTIME_TASK = new DownLoadWithSplitTimeTask(vodParam,this);
+	public final Runnable DOWNLOAD_WITHSPLITTIME_TASK;
 	
+	public final Runnable DOWNLOAD_WITHSPLITFILE_TASK;
 	/**
 	 * 
 	 * @param vodParam 已经分隔好的
 	 */
-	public HaiKangServerImpl(VodParam vodParam,DownloadTaskSchdule downloadTaskSchdule,TranscodingServerImpl transcodingServer) {
+	public HaiKangServerImpl(VodParam vodParam,DownLoadTranscoding<DownLoadTaskAndSplitFileTranscoding> downLoadTranscoding,TranscodingServerImpl transcodingServer) {
 		super();
 		this.vodParam = vodParam;
-		this.downloadTaskSchdule = downloadTaskSchdule;
+		this.downLoadTranscoding = downLoadTranscoding;
 		this.transcodingServer = transcodingServer;
 		login();
+		DOWNLOAD_WITHSPLITTIME_TASK = new DownLoadWithSplitTimeTask(vodParam,this);
+		DOWNLOAD_WITHSPLITFILE_TASK = new DownLoadWithSplitFileTask(vodParam,this);
 	}
 	
 	@Override
@@ -73,27 +80,28 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 					vodParam.getMonitorEntity().getChannelNum(), "运行错误",timeParm);
 			downLoadByTimeZone(timeParm);
 		} else {
-			
-//			logger.warn("海康全局错误代码{},userId:{},channel:{},{}", hCNetSDK.NET_DVR_GetLastError(), userId,
-//					vodParam.getMonitorEntity().getChannelNum(), "运行正确");
-			
-//			hCNetSDK.NET_DVR_PlayBackControl(lPreviewHandle, HCNetSDK.NET_DVR_SET_TRANS_TYPE, 2, null);
-//			logger.warn("海康全局错误代码{},userId:{},channel:{},{},当前时间参数：{}", hCNetSDK.NET_DVR_GetLastError(), userId,
-//					vodParam.getMonitorEntity().getChannelNum(), "设置视频类型",timeParm);
+		
+			logger.warn("海康全局错误代码{},userId:{},channel:{},{}", hCNetSDK.NET_DVR_GetLastError(), userId,
+					vodParam.getMonitorEntity().getChannelNum(), "运行正确");
+			//Ts 流 具有的特点就是精准的时间戳 能利用 工具 进行 视频截取
+			hCNetSDK.NET_DVR_PlayBackControl(lPreviewHandle, HCNetSDK.NET_DVR_SET_TRANS_TYPE, 2, null);
+			logger.warn("海康全局错误代码{},userId:{},channel:{},{},当前时间参数：{}", hCNetSDK.NET_DVR_GetLastError(), userId,
+					vodParam.getMonitorEntity().getChannelNum(), "设置视频类型",timeParm);
 			
 			//下载必须执行这一行 才可以正常运行
 			hCNetSDK.NET_DVR_PlayBackControl(lPreviewHandle, HCNetSDK.NET_DVR_PLAYSTART, 0, null);
 			
 			
-			
+			//设置下载速度
 //			hCNetSDK.NET_DVR_PlayBackControl(lPreviewHandle, HCNetSDK.NET_DVR_SETSPEED, 180000, null);
 //			logger.warn("海康全局错误代码{},userId:{},channel:{},{},当前时间参数：{}", hCNetSDK.NET_DVR_GetLastError(), userId,
 //					vodParam.getMonitorEntity().getChannelNum(), "设置码率",timeParm);
 //			
 			
 			//添加下载任务检测到 定时检测中
-			//downloadTaskSchdule.addDownloadTask(new DownloadTask(lPreviewHandle,vodParam,timeParm,transcodingServer));
-			downloadTaskSchdule.addDownloadTask(new DownloadTask(lPreviewHandle,vodParam,timeParm,null));
+			downLoadTranscoding.addDownloadTask(new DownLoadTaskAndSplitFileTranscoding(lPreviewHandle,vodParam,timeParm,transcodingServer));
+			//非转码
+			//downloadTaskSchdule.addDownloadTask(new DownloadTask(lPreviewHandle,vodParam,timeParm,null));
 			
 		}		
 	}
@@ -123,14 +131,13 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 		}
 	}
 	/**
-	 * 兼容其他方案的做法
+	 * 兼容其他方案的做法 没有对时间进行处理
 	 */
 	@Override
 	public void run() {
 		try {
 			QueryTimeParam queryTimeParam = vodParam.getTime();
 			vodParam.setQueryTimeParams(Arrays.asList(queryTimeParam));
-			logger.info("{}",queryTimeParam);
 			File file = queryTimeParam.getFile();
 			if(!file.exists())
 				file.mkdirs();

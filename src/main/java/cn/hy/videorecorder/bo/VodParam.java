@@ -30,5 +30,6 @@ public class VodParam {
 	private Integer splitSecStep;
 	
 	private MonitorEntity monitorEntity;
+	
 
 }

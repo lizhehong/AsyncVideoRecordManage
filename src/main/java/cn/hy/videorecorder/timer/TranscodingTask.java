@@ -9,7 +9,6 @@ import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
-import lombok.Data;
 
 public class TranscodingTask implements  Runnable {
 
@@ -25,11 +24,14 @@ public class TranscodingTask implements  Runnable {
 	 */
 	private VodParam vodParam;
 	
-	public TranscodingTask(String cmd,QueryTimeParam queryTimeParam,VodParam vodParam) {
+	private boolean delOrignFile;
+	
+	public TranscodingTask(String cmd,QueryTimeParam queryTimeParam,VodParam vodParam,boolean delOrignFile) {
 		super();
 		this.cmd = cmd;
 		this.queryTimeParam = queryTimeParam;
 		this.vodParam = vodParam;
+		this.delOrignFile = delOrignFile;
 	}
 	
 	public QueryTimeParam getQueryTimeParam() {
@@ -47,18 +49,23 @@ public class TranscodingTask implements  Runnable {
 			Process process = Runtime.getRuntime().exec(cmd);//运行转码程序
 			process.waitFor();//等待转码完成
 			process.destroyForcibly();//销毁转码进程
-			//拿到转码后的文件
-			File transcondedFile = queryTimeParam.getFile();
-			//删除原文件
-			String fileName = transcondedFile.getName();
-			fileName =(fileName.substring(0, fileName.indexOf(".")))+".mp4";
-			//删除原来文件
-			File orignFile = new File(transcondedFile.getParentFile(),fileName);
-			String orignFilePath = orignFile.getAbsolutePath();
-			orignFile.delete();
 			
 			//更新视频状态
 			queryTimeParam.setDownLoadState(DownLoadState.已经下载);
+			
+			String orignFilePath = "";
+			//删除原来文件
+			if(delOrignFile){
+				//拿到转码后的文件
+				File transcondedFile = queryTimeParam.getFile();
+				//删除原文件
+				String fileName = transcondedFile.getName();
+				fileName =(fileName.substring(0, fileName.indexOf(".")))+".mp4";
+				File orignFile = new File(transcondedFile.getParentFile(),fileName);
+				orignFilePath = orignFile.getAbsolutePath();
+				orignFile.delete();
+			}
+			
 			//固化内存信息
 			QueryTimeParamUtils.storgeInfo(queryTimeParam.getFile().getParentFile(), vodParam);
 			

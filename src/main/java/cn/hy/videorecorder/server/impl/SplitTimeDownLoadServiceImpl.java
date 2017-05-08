@@ -14,8 +14,9 @@ import cn.hy.haikang.server.impl.HaiKangServerImpl;
 import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
-import cn.hy.videorecorder.schdule.DownloadTaskSchdule;
+import cn.hy.videorecorder.schdule.DownLoadTranscoding;
 import cn.hy.videorecorder.server.SplitTimeDownLoadService;
+import cn.hy.videorecorder.timer.DownLoadTaskAndSplitFileTranscoding;
 import cn.hy.videorecorder.utils.TimeUtils;
 /**
  * 分割视频点播视频时长 下载
@@ -25,8 +26,8 @@ import cn.hy.videorecorder.utils.TimeUtils;
 @Service("splitTimeDownLoadService")
 public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	
-	@Autowired @Qualifier("downloadTaskSchdule")
-	private DownloadTaskSchdule downloadTaskSchdule;
+	@Autowired @Qualifier("downloadTaskSplitFileTranscodingSchdule")
+	private DownLoadTranscoding<DownLoadTaskAndSplitFileTranscoding> downLoadTranscoding;
 	
 	@Autowired @Qualifier("transcodingServer")
 	private TranscodingServerImpl transcodingServer;
@@ -35,7 +36,6 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	 * 固定线程数 同时N个下载任务
 	 */
 	private ExecutorService fixedThreadPool = Executors.newFixedThreadPool(20);
-	
 	
 	public void createTimeSplitTask(VodParam vodParam) throws Exception {
 		// 分割好的时间片段
@@ -63,7 +63,7 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 			switch (vodParam.getMonitorEntity().getVrUserType()) {
 				case 海康:
 					//注入 下载进度轮训 下载后的转码服务
-					fixedThreadPool.submit(new HaiKangServerImpl(vodParam,downloadTaskSchdule,transcodingServer));
+					fixedThreadPool.submit(new HaiKangServerImpl(vodParam,downLoadTranscoding,transcodingServer).DOWNLOAD_WITHSPLITFILE_TASK);
 					break;
 				case 大华:
 					break;

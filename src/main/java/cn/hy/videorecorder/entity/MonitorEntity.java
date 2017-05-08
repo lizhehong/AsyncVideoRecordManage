@@ -64,5 +64,5 @@ public class MonitorEntity implements Serializable{
 	 * 点播每秒视频大小
 	 */
 	@Column(name="vodsize_by_per_sec")
-	private Long VodsizeByperSec;
+	private Long VodSizeByperSec;
 }

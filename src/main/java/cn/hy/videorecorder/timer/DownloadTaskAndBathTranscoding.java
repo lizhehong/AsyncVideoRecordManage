@@ -1,7 +1,5 @@
 package cn.hy.videorecorder.timer;
 
-import java.util.concurrent.Callable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -15,7 +13,12 @@ import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 
-public class DownloadTask implements  Callable<DownloadTask> {
+/**
+ * 下载任务 同时批量转码 既下载完成片段转码
+ * @author Administrator
+ *
+ */
+public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAndBathTranscoding> {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -45,7 +48,7 @@ public class DownloadTask implements  Callable<DownloadTask> {
 	 */
 	private TranscodingServerImpl transcodingServer;
 	
-	public DownloadTask(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm,TranscodingServerImpl transcodingServer){
+	public DownloadTaskAndBathTranscoding(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm,TranscodingServerImpl transcodingServer){
 		super();
 		this.lFileHandle = lFileHandle;
 		this.vodParam = vodParam;
@@ -71,7 +74,7 @@ public class DownloadTask implements  Callable<DownloadTask> {
 	 * 返回非空 说明 需要继续执行(轮训下载进度)
 	 */
 	@Override
-	public DownloadTask call() {
+	public DownloadTaskAndBathTranscoding call() {
 		try {
 			IntByReference nPos = new IntByReference(0);
 			
@@ -83,12 +86,13 @@ public class DownloadTask implements  Callable<DownloadTask> {
             	
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);
+            	logger.info("下载完毕:{}",timeParm);
             	//执行转码服务
     			if(flag && transcodingServer != null){
     				logger.info("转码开始：{}",timeParm);
     				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm);
     				if(!StringUtils.isEmpty(ffmpegCmdStr)){
-    					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam));
+    					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,true));
     				}
     			}
     			return null;
