@@ -3,7 +3,7 @@ var indexFile;
 $(document).ready(function() {
 		var successVideoList = [];
 		var nowIndex = 0;
-		var hasPauseEvent = false;
+		var hasEvent = false;
 		var firstOk = false;
 		function findVideoByFileNameInCache(fileName){
 			var video ;
@@ -26,7 +26,7 @@ $(document).ready(function() {
             //myPlayer.load(u);  //使video重新加载
             myPlayer.play();
             nowIndex++;
-            if(!hasPauseEvent){//检测播放进度
+            if(!hasEvent){//检测播放进度
             	hasPauseEvent = true;
             	myPlayer.on("ended",function(){
             		var video = successVideoList[nowIndex];
@@ -34,6 +34,12 @@ $(document).ready(function() {
             			playVedio($('#hidid').val(),video.fileName)
             		}
             		//通知客户端 已经看完了多少视频 由服务器 去做处理
+            	});
+            	myPlayer.on("timeupdate",function(){
+            		var video = successVideoList[nowIndex];
+            		if(this.currentTime > (video.splitSecStep*0.6)){//视频缓存 让视频切换不卡
+            			$.get("/"+$('#hidid').val()+"/"+video.fileName);
+            		}
             	})
             }
 		}
