@@ -39,7 +39,18 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 			String monitorId = node.get("parentPathName").textValue();
 			vodParam.setMonitorEntity(monitorRepository.findOne(monitorId));
 			vodParam.setSplitSecStep(node.get("splitSecStep").intValue());
-			//node.
+			JsonNode videoNodes = node.get("videos");
+			if(videoNodes.isArray()&&videoNodes.size() > 0){
+				for(JsonNode videoNoe:videoNodes){
+					QueryTimeParam time = new QueryTimeParam();
+					time.setStartTime(sdf.parse(videoNoe.get("startTime").textValue()));
+					time.setStartTime(sdf.parse(videoNoe.get("EndTime").textValue()));
+					time.setVodReqState(VodRequestState.valueOf(videoNoe.get("vodReqState").textValue()));
+					time.setDownLoadState(DownLoadState.valueOf(videoNoe.get("downLoadState").textValue()));
+					time.setFile(new File(downLoadPath+monitorId+"/"+videoNoe.get("fileName").asText()));
+					vodParam.getQueryTimeParams().add(time);
+				}
+			}
 			//vodParam.setQueryTimeParams(queryTimeParams);
 			
 			QueryTimeParam time = new QueryTimeParam();
@@ -51,7 +62,6 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 			
 			vodParam.setTime(time );
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

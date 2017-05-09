@@ -27,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.entity.type.CallType;
@@ -56,6 +59,9 @@ public class MonitorCtr {
 	
 	@Autowired @Qualifier("monitorServer")
 	private MonitorServer monitorServer;
+	
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	@PostMapping("monitor")
 	@ApiOperation(value = "创建视频", notes = "")
@@ -146,6 +152,11 @@ public class MonitorCtr {
 			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
 		String monitorId = vodMonitorForm.getMonitorId();
 		File indexFile = new File(downloadPath+monitorId+"/index.json");
+		VodParam vodParam = objectMapper.readValue(indexFile, VodParam.class);
+		//TODO 找出与生成的文件视频列表的差异 补齐
+		vodMonitorForm.getStartTime();
+		vodMonitorForm.getEndTime();
+		//vodParam.getQueryTimeParams().stream().filter(item->item.getStartTime())
 		//检查
 		return monitorServer.startDownLoadActionToVod(vodMonitorForm);
 		

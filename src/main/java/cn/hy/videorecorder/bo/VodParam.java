@@ -4,14 +4,17 @@ package cn.hy.videorecorder.bo;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import cn.hy.videorecorder.bo.deserializer.VodParamDeserializrer;
 import cn.hy.videorecorder.bo.serial.VodParamSerail;
 import cn.hy.videorecorder.entity.MonitorEntity;
 import lombok.Data;
 
 @Data
 @JsonSerialize(using=VodParamSerail.class)
+@JsonDeserialize(using=VodParamDeserializrer.class)
 public class VodParam {
 	
 	
