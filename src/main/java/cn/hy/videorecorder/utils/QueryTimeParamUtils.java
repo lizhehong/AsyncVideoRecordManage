@@ -3,23 +3,25 @@ package cn.hy.videorecorder.utils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cn.hy.videorecorder.bo.QueryTimeParam;
+import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.server.StreamDownLoadServer;
 
 public class QueryTimeParamUtils {
 	
 	private static ObjectMapper objectMapper = new ObjectMapper();
 	
+	private static Logger logger = LoggerFactory.getLogger(QueryTimeParamUtils.class);
 	
-	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam,int secStep,String offsetDate){
+	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam,int secStep,String offsetDate,File orginFile){
 		try {
 			File file = queryTimeParam.getFile();
 			String fileName =  file.getName();
@@ -33,15 +35,14 @@ public class QueryTimeParamUtils {
 							
 							+ " -t "+ secStep +
 			
-							"-i " + file.getAbsolutePath() +
+							" -i " + orginFile.getAbsolutePath() +
 							
 							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f flv "+
-							//" -c:v copy -loglevel quiet -an -f flv " +
 							
 							file.getParentFile().getAbsolutePath()+
 							
 							"\\"+fileName;
-
+			logger.info("当前的视频转换命令：{}",command);
 			queryTimeParam.setFile(new File(file.getParentFile(),fileName));
 			
 			return command;
@@ -75,7 +76,7 @@ public class QueryTimeParamUtils {
 							file.getParentFile().getAbsolutePath()+
 							
 							"\\"+fileName;
-
+			System.out.println(command);
 			queryTimeParam.setFile(new File(file.getParentFile(),fileName));
 			
 			return command;
@@ -89,12 +90,13 @@ public class QueryTimeParamUtils {
 		try {
 			for(QueryTimeParam queryTimeParam:queryTimeParams){
 				
-				File parentFile = queryTimeParam.getFile().getParentFile();
-				if(!parentFile.exists())
-					parentFile.mkdirs();
-				//保证文件存在的情况下 才进行下载任务
-				streamDownLoadServer.downLoadByTimeZone(queryTimeParam);
-				
+				if(queryTimeParam.getVodReqState().equals(VodRequestState.已经请求)){
+					File parentFile = queryTimeParam.getFile().getParentFile();
+					if(!parentFile.exists())
+						parentFile.mkdirs();
+					//保证文件存在的情况下 才进行下载任务
+					streamDownLoadServer.downLoadByTimeZone(queryTimeParam);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

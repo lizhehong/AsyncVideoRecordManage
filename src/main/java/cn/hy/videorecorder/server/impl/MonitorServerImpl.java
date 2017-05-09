@@ -15,6 +15,7 @@ import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.entity.indentity.NetIndentity;
 import cn.hy.videorecorder.entity.indentity.UserIndentity;
 import cn.hy.videorecorder.entity.type.RtspStreamType;
+import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 import cn.hy.videorecorder.repository.MonitorRepository;
 import cn.hy.videorecorder.server.MonitorServer;
@@ -107,10 +108,11 @@ public class MonitorServerImpl implements MonitorServer{
 			VodParam vodParam = new VodParam();
 			
 			QueryTimeParam queryTimeParam = new QueryTimeParam();
-			queryTimeParam.setDownLoadState(DownLoadState.未下载);
+			queryTimeParam.setDownLoadState(DownLoadState.已经下载);
+			queryTimeParam.setVodReqState(VodRequestState.已经请求);
 			queryTimeParam.setEndTime(vodMonitorForm.getEndTime());
 			queryTimeParam.setStartTime(vodMonitorForm.getStartTime());
-			queryTimeParam.setFile(new File(downLoadPath+"\\"+monitorEntity.getId()));
+			queryTimeParam.setFile(new File(downLoadPath+monitorEntity.getId()));
 			
 			vodParam.setTime(queryTimeParam);
 			vodParam.setMonitorEntity(monitorEntity);

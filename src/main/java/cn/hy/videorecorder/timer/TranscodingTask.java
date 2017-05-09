@@ -51,7 +51,7 @@ public class TranscodingTask implements  Runnable {
 			process.destroyForcibly();//销毁转码进程
 			
 			//更新视频状态
-			queryTimeParam.setDownLoadState(DownLoadState.已经下载);
+			queryTimeParam.setDownLoadState(DownLoadState.已经转码);
 			
 			String orignFilePath = "";
 			//删除原来文件

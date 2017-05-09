@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.TimeZone;
+import cn.hy.videorecorder.entity.type.VodRequestState;
 
 public class TimeUtils {
 
@@ -77,7 +78,7 @@ public class TimeUtils {
 		return tmpCalendar.getTime();
 	}
 	/**
-	 * 填充整分钟再 时间段平均分割
+	 * 填充整分钟再 时间段平均分割 升序排列
 	 * 时间太长 可能会占用内存或者切割时间
 	 * @param queryTimeParam	查询时间
 	 * @param secondStep 		秒步长
@@ -107,7 +108,7 @@ public class TimeUtils {
 					//计算结尾时间
 					calendar.add(Calendar.SECOND, secondStep);
 					newQueryTime.setEndTime(calendar.getTime());
-					
+					newQueryTime.setVodReqState(VodRequestState.未请求);
 					queryTimeParams.add(newQueryTime);
 					startTime = calendar.getTime();//末尾时间作为第二次的开始时间
 				}
@@ -117,6 +118,7 @@ public class TimeUtils {
 					QueryTimeParam newQueryTime = new QueryTimeParam();
 					newQueryTime.setStartTime(startTime);
 					newQueryTime.setEndTime(endTime);
+					newQueryTime.setVodReqState(VodRequestState.未请求);
 					queryTimeParams.add(newQueryTime);
 				}
 			}else {//不用切片的情况下

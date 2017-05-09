@@ -1,11 +1,14 @@
 package cn.hy.videorecorder.ctr.rest;
 
 
+import java.io.File;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
@@ -42,6 +45,9 @@ import io.swagger.annotations.ApiParam;
 @RestController
 public class MonitorCtr {
 
+	@Value("${download.path}")
+	private String downloadPath;
+	
 	@Autowired
 	private MonitorRepository monitorInfoRepository;
 	
@@ -138,7 +144,9 @@ public class MonitorCtr {
 	@PostMapping("monitor/publish_vod")
 	public VodParam publishVodMonitor(
 			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
-		
+		String monitorId = vodMonitorForm.getMonitorId();
+		File indexFile = new File(downloadPath+monitorId+"/index.json");
+		//检查
 		return monitorServer.startDownLoadActionToVod(vodMonitorForm);
 		
 	}

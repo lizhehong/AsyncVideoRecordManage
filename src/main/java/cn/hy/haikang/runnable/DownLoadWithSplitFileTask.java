@@ -2,6 +2,7 @@ package cn.hy.haikang.runnable;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.UUID;
 
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
@@ -25,17 +26,12 @@ public class DownLoadWithSplitFileTask implements Runnable {
 	public void run() {
 		try {
 			QueryTimeParam queryTimeParam = vodParam.getTime();
-			
-			
-			
-			
-			
 			vodParam.setQueryTimeParams(Arrays.asList(queryTimeParam));
 			File file = queryTimeParam.getFile();
 			if(!file.exists())
 				file.mkdirs();
 			if(!file.isFile())
-				queryTimeParam.setFile(new File(file,"video-0.mp4"));
+				queryTimeParam.setFile(new File(file,"video-"+UUID.randomUUID().toString()+".mp4"));
 			streamDownLoadServer.downLoadByTimeZone(queryTimeParam);
 		} catch (Exception e) {
 			e.printStackTrace();

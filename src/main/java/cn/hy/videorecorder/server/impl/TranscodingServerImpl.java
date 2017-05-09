@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.timer.TranscodingTask;
 
 /**
@@ -46,6 +47,7 @@ public class TranscodingServerImpl {
 	@SuppressWarnings("unchecked")
 	@Scheduled(fixedDelay=2000)
 	public void  arrangeTranscodingTask(){
+		//时间降序排序器
 		Comparator<TranscodingTask> c = new Comparator(){
 
 			@Override
@@ -57,10 +59,24 @@ public class TranscodingServerImpl {
 				return (int) (t1StartTime - t2StartTime);
 			}         
 		};
-		Collections.sort(transcodingTasks,c);
-		logger.info("排序后：{}",transcodingTasks);
+		List<TranscodingTask> clientTaskList = new ArrayList<>();
 		
 		Iterator<TranscodingTask> iterator = transcodingTasks.iterator();
+		//拿到客户进行点播的进行转码
+		while(iterator.hasNext()){
+			TranscodingTask transcodingTask = iterator.next();
+			if(transcodingTask.getQueryTimeParam().getVodReqState().equals(VodRequestState.已经请求)){
+				clientTaskList.add(transcodingTask);
+				iterator.remove();
+			}
+		}
+		
+		Collections.sort(clientTaskList,c);
+		if(clientTaskList.size() > 0)
+			logger.info("ffmpeg 转码命令 排序后：{}",clientTaskList);
+		
+		iterator = clientTaskList.iterator();
+		
 		//进行转码
 		while(iterator.hasNext()){
 			executorService.execute(iterator.next());

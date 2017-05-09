@@ -31,5 +31,4 @@ public class VodParam {
 	
 	private MonitorEntity monitorEntity;
 	
-
 }

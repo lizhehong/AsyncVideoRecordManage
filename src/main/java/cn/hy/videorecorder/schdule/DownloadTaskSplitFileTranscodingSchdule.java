@@ -66,6 +66,7 @@ public class DownloadTaskSplitFileTranscodingSchdule implements DownLoadTranscod
 		}
 		//老任务的检测放到下一个轮回	
 		oldDownloadTasks.addAll(newDownloadTasks);
-		logger.info("一轮检测下载任务运行时间：{},下次剩余监听量：{}",System.currentTimeMillis()-start,oldDownloadTasks.size());
+		if(oldDownloadTasks.size() > 0)
+			logger.info("一轮检测下载任务运行时间：{},下次剩余监听量：{}",System.currentTimeMillis()-start,oldDownloadTasks.size());
 	}
 }

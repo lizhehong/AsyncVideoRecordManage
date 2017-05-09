@@ -61,6 +61,7 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
 	 */
 	private Calendar curCalendar = Calendar.getInstance();
 	
+	private Date taskStartTime = new Date();
 	
 	public DownLoadTaskAndSplitFileTranscoding(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm,TranscodingServerImpl transcodingServer){
 		super();
@@ -98,10 +99,12 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
             	
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);
-            	logger.info("下载完毕:{}",timeParm);
+            	long sizeLen = timeParm.getFile().length();
+            	long timeLen = new Date().getTime()-taskStartTime.getTime();
+            	logger.info("运行时间:{},文件大小:{},网速：{},下载完毕:{}",timeLen,sizeLen,sizeLen/(timeLen*1.024),timeParm);
             	//执行转码服务
     			if(flag && transcodingServer != null){
-    				logger.info("最后片段转码开始：{}",timeParm);
+    				//logger.info("最后片段转码开始：{}",timeParm);
 //    				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm);
 //    				if(!StringUtils.isEmpty(ffmpegCmdStr)){
 //    					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,true));
@@ -109,43 +112,7 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
     			}
     			return null;
             }else{
-            	//该视频点播源文件每秒的文件大小
-            	long vodSizeByperSec= vodParam.getMonitorEntity().getVodSizeByperSec();
-            	//检测文件是否到达指定的步长倍数
-            	File file = timeParm.getFile();
-            	if(file.exists() && file.isFile()){
-            		Long multiple = file.length() / (vodSizeByperSec*vodParam.getSplitSecStep());
-            		if(!splitedList.contains(multiple)){//文件容量到达指定大小
-            			//计算命令需要的时间偏移量
-            			int curMinute = curCalendar.get(Calendar.MINUTE);
-            			int curSec = curCalendar.get(Calendar.SECOND);
-            			
-            			
-            			QueryTimeParam queryTimeParam = vodParam.getQueryTimeParams().get(0);
-            			Calendar calendar = Calendar.getInstance();
-            			calendar.setTime(queryTimeParam.getStartTime());
-            			int minute = calendar.get(Calendar.MINUTE);
-            			int sec = calendar.get(Calendar.SECOND);
-            			
-            			//计算小时差
-            			long hourDiff = (curCalendar.getTime().getTime() - calendar.getTime().getTime())/(24*60*60*1000);
-            			
-            			
-            			String offsetDate =	hourDiff + ":" +
-            								(curMinute - minute) + ":" +
-            								(curSec - sec)+".000";
-            			
-            			//还没进过抽取解码
-            			String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm,vodParam.getSplitSecStep(),offsetDate);
-            			if(!StringUtils.isEmpty(ffmpegCmdStr)){
-        					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,false));
-        				}
-            			
-            			
-            			splitedList.add(multiple);
-            			curCalendar.add(Calendar.SECOND, vodParam.getSplitSecStep());
-            		}
-            	}
+            	//checkDownLoadProgressToTranscoding();
             	
             	return this;
             }
@@ -155,5 +122,56 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
 			e.printStackTrace();
 		}
 		return this;
+	}
+
+
+
+	private void checkDownLoadProgressToTranscoding() {
+		File file = timeParm.getFile();
+		
+		String fileName = file.getName().substring(0,file.getName().lastIndexOf("."));
+		file = new File(timeParm.getFile().getParentFile(),fileName+".mp4");
+		//该视频点播源文件每秒的文件大小
+		long vodSizeByperSec= vodParam.getMonitorEntity().getVodSizeByperSec();
+		//检测文件是否到达指定的步长倍数
+		logger.info("点播视频源文件:{},大小：{},数据库点播文件每秒大小：{},系统时间步长：{}",file.getAbsolutePath(),file.length(),vodSizeByperSec,vodParam.getSplitSecStep());
+		if(file.exists() && file.isFile()){
+			Long multiple = file.length() / (vodSizeByperSec*vodParam.getSplitSecStep());
+			logger.info("当前文件进度大小：{}",multiple);
+			if(!splitedList.contains(multiple)){//文件容量到达指定大小
+				//计算命令需要的时间偏移量
+				int curMinute = curCalendar.get(Calendar.MINUTE);
+				int curSec = curCalendar.get(Calendar.SECOND);
+				
+				
+				QueryTimeParam queryTimeParam = vodParam.getQueryTimeParams().get(0);
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(queryTimeParam.getStartTime());
+				int minute = calendar.get(Calendar.MINUTE);
+				int sec = calendar.get(Calendar.SECOND);
+				
+				//计算小时差
+				long hourDiff = (curCalendar.getTime().getTime() - calendar.getTime().getTime())/(24*60*60*1000);
+				
+				
+				String offsetDate =	hourDiff + ":" +
+									(curMinute - minute) + ":" +
+									(curSec - sec)+".000";
+				//加上一个识别不同时间的码
+				File curFile = timeParm.getFile();
+				timeParm.setFile(new File(timeParm.getFile().getParentFile(),fileName+"_"+multiple+".flv"));
+				//还没进过抽取解码
+				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm,vodParam.getSplitSecStep(),offsetDate,file);
+				
+				timeParm.setFile(curFile);
+				if(!StringUtils.isEmpty(ffmpegCmdStr)){
+					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,false));
+				}
+				
+				
+				splitedList.add(multiple);
+				curCalendar.add(Calendar.SECOND, vodParam.getSplitSecStep());
+			}
+		}
 	}
 }

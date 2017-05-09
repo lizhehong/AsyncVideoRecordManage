@@ -2,6 +2,7 @@ package cn.hy.haikang.server.impl;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 
 	public static NativeLong userId = new NativeLong(-1);
 	
-	private DownLoadTranscoding<DownLoadTaskAndSplitFileTranscoding> downLoadTranscoding;
+	private DownLoadTranscoding<DownloadTaskAndBathTranscoding> downLoadTranscoding;
 
 	private TranscodingServerImpl transcodingServer;
 	/**
@@ -56,7 +57,7 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 	 * 
 	 * @param vodParam 已经分隔好的
 	 */
-	public HaiKangServerImpl(VodParam vodParam,DownLoadTranscoding<DownLoadTaskAndSplitFileTranscoding> downLoadTranscoding,TranscodingServerImpl transcodingServer) {
+	public HaiKangServerImpl(VodParam vodParam,DownLoadTranscoding<DownloadTaskAndBathTranscoding> downLoadTranscoding,TranscodingServerImpl transcodingServer) {
 		super();
 		this.vodParam = vodParam;
 		this.downLoadTranscoding = downLoadTranscoding;
@@ -99,7 +100,7 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 //			
 			
 			//添加下载任务检测到 定时检测中
-			downLoadTranscoding.addDownloadTask(new DownLoadTaskAndSplitFileTranscoding(lPreviewHandle,vodParam,timeParm,transcodingServer));
+			downLoadTranscoding.addDownloadTask(new DownloadTaskAndBathTranscoding(lPreviewHandle,vodParam,timeParm,transcodingServer));
 			//非转码
 			//downloadTaskSchdule.addDownloadTask(new DownloadTask(lPreviewHandle,vodParam,timeParm,null));
 			
@@ -142,7 +143,7 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 			if(!file.exists())
 				file.mkdirs();
 			if(!file.isFile())
-				queryTimeParam.setFile(new File(file,"video-0.mp4"));
+				queryTimeParam.setFile(new File(file,"video-"+UUID.randomUUID().toString()+".mp4"));
 			downLoadByTimeZone(queryTimeParam);
 		} catch (Exception e) {
 			e.printStackTrace();

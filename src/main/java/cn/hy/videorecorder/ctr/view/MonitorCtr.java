@@ -15,6 +15,12 @@ public class MonitorCtr {
 	public String index(){
 		
 		
-		return "index";
+		return "/index";
+	}
+	@GetMapping("monitor/vod")
+	public String vod(){
+		
+		
+		return "/vod";
 	}
 }

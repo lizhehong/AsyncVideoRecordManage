@@ -25,6 +25,9 @@ public class VodParamSerail extends JsonSerializer<VodParam>{
 		gen.writeStringField("startTime",sdf.format(queryTimeParam.getStartTime()));
 		gen.writeStringField("EndTime",sdf.format(queryTimeParam.getEndTime()));
 		
+		gen.writeStringField("downLoadState",queryTimeParam.getDownLoadState().name());
+		gen.writeStringField("vodReqState",queryTimeParam.getVodReqState().name());
+		
 		gen.writeStringField("parentPathName", queryTimeParam.getFile().getName());
 		gen.writeNumberField("splitSecStep", vodParam.getSplitSecStep()==null?0:vodParam.getSplitSecStep());
 		gen.writeStringField("vrUserType",  vodParam.getMonitorEntity().getVrUserType().name());
@@ -36,6 +39,8 @@ public class VodParamSerail extends JsonSerializer<VodParam>{
 				gen.writeStringField("downLoadState", queryTimeParamItem.getDownLoadState().name());
 				gen.writeStringField("startTime",sdf.format(queryTimeParamItem.getStartTime()));
 				gen.writeStringField("EndTime",sdf.format(queryTimeParamItem.getEndTime()));
+				
+				gen.writeStringField("vodReqState", queryTimeParamItem.getVodReqState().name());
 				gen.writeEndObject();
 			}
 		gen.writeEndArray();

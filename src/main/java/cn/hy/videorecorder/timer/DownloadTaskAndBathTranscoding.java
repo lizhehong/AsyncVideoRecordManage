@@ -8,6 +8,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.IntByReference;
 
 import cn.hy.haikang.config.HCNetSDK;
+import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
@@ -83,6 +84,8 @@ public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAn
             this.downLoadProgress = nPos.getValue();
             
             if(downLoadProgress > 100 || downLoadProgress == 100){
+            	
+            	timeParm.setDownLoadState(DownLoadState.已经下载);
             	
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);

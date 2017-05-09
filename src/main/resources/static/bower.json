@@ -1,0 +1,15 @@
+{
+  "name": "static",
+  "homepage": "https://github.com/lizhehong/AsyncVideoRecorderManage",
+  "description": "",
+  "main": "",
+  "keywords": [
+    "stream",
+    "manage",
+    "system"
+  ],
+  "authors": [
+    "lizhehong"
+  ],
+  "license": "MIT"
+}

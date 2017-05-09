@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.timer.CallableI;
-import cn.hy.videorecorder.timer.DownLoadTaskAndSplitFileTranscoding;
 import cn.hy.videorecorder.timer.DownloadTaskAndBathTranscoding;
 
 /**
@@ -31,7 +30,7 @@ public class DownloadTaskAndTranscodingFileSchdule implements DownLoadTranscodin
 	/**
 	 * 固定线程池 同时监听N路下载
 	 */
-	private ExecutorService executorService = Executors.newFixedThreadPool(30);
+	private ExecutorService executorService = Executors.newFixedThreadPool(10);
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -57,7 +56,7 @@ public class DownloadTaskAndTranscodingFileSchdule implements DownLoadTranscodin
 	 * @throws InterruptedException 
 	 */
 	@Scheduled(fixedDelay=300)
-	public void checkDownLoadTask() throws Exception{
+	public synchronized void checkDownLoadTask() throws Exception{
 		long start = System.currentTimeMillis();
 		Iterator<Future<DownloadTaskAndBathTranscoding>> iterator = oldDownloadTasks.iterator();
 		List<Future<DownloadTaskAndBathTranscoding>> newDownloadTasks = new ArrayList<>();
@@ -72,7 +71,8 @@ public class DownloadTaskAndTranscodingFileSchdule implements DownLoadTranscodin
 		}
 		//老任务的检测放到下一个轮回	
 		oldDownloadTasks.addAll(newDownloadTasks);
-		logger.info("一轮检测下载任务运行时间：{},下次剩余监听量：{}",System.currentTimeMillis()-start,oldDownloadTasks.size());
+		if(oldDownloadTasks.size() > 0)
+			logger.info("一轮检测下载任务运行时间：{},下次剩余监听量：{}",System.currentTimeMillis()-start,oldDownloadTasks.size());
 	}
 	
 }
