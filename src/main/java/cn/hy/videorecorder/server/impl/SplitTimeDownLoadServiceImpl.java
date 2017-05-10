@@ -7,10 +7,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +40,10 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	@Autowired @Qualifier("transcodingServer")
 	private TranscodingServerImpl transcodingServer;
 	
+	
+	@Value("${cache.videoList.cacheMaxCount}")
+	private Integer cacheMaxCount;
+	
 	/**
 	 * 固定线程数 同时N个下载任务
 	 */
@@ -51,7 +54,7 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 		List<QueryTimeParam> oldQueryTimeParams = TimeUtils.fillFullMinAndSplitTime(vodParam.getTime(),
 				vodParam.getSplitSecStep());
 		int cacheCount = 0;
-		int cacheMaxCount = 4;
+		
 		Date startTime = vodParam.getTime().getStartTime();
 		for (int i = 0; i < oldQueryTimeParams.size(); i++) {
 			// 老的需要分割的时间
@@ -64,17 +67,23 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 			queryTimeParam.setTranscodedFile(new File(file.getAbsolutePath() + "\\" + "video-" + UUID.randomUUID().toString() + ".mp4"));
 			
 			queryTimeParam.setDownLoadState(DownLoadState.未下载);
-			if(cacheCount > 0 && cacheCount < cacheMaxCount){//说明已经找到了第一个
-				queryTimeParam.setVodReqState(VodRequestState.已经请求);
-				cacheCount++;
-			}else if(queryTimeParam.getStartTime().getTime() <= startTime.getTime() && startTime.getTime() <= queryTimeParam.getEndTime().getTime() ){//找出用户点播时间在 系统时间分隔中的哪些中
-				queryTimeParam.setVodReqState(VodRequestState.已经请求);
-				cacheCount++;
-			}
+			
+			cacheCount = applyCacheReVideo(cacheCount, cacheMaxCount, startTime, queryTimeParam);
 			
 			
 			vodParam.getQueryTimeParams().add(queryTimeParam);
 		}
+	}
+	
+	public int applyCacheReVideo(int cacheCount, int cacheMaxCount, Date startTime, QueryTimeParam queryTimeParam) {
+		if(cacheCount > 0 && cacheCount < cacheMaxCount){//说明已经找到了第一个
+			queryTimeParam.setVodReqState(VodRequestState.已经请求);
+			cacheCount++;
+		}else if(queryTimeParam.getStartTime().getTime() <= startTime.getTime() && startTime.getTime() <= queryTimeParam.getEndTime().getTime() ){//找出用户点播时间在 系统时间分隔中的哪些中
+			queryTimeParam.setVodReqState(VodRequestState.已经请求);
+			cacheCount++;
+		}
+		return cacheCount;
 	}
 	@Async
 	public void startTask(VodParam vodParam) {

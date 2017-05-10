@@ -1,7 +1,5 @@
 package cn.hy.videorecorder.utils;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -36,7 +34,7 @@ public class TimeUtils {
 			int val = i*secStep;
 			list.add(val);
 		}
-		System.out.println(list);
+		
 		for(int i=0;i<list.size();i++){
 			if(sec >= list.get(i) && sec <= list.get(i+1)){
 				calendar.add(Calendar.SECOND, list.get(i) );

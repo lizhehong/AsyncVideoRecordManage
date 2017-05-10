@@ -55,6 +55,7 @@ public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAn
 		this.vodParam = vodParam;
 		this.timeParm = timeParm;
 		this.transcodingServer = transcodingServer;
+		
 	}
 	
 	
@@ -100,6 +101,14 @@ public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAn
     			}
     			return null;
             }else{
+            	if(!timeParm.getDownLoadState().equals(DownLoadState.下载中)){
+	            	try {
+	        			timeParm.setDownLoadState(DownLoadState.下载中);
+	        			QueryTimeParamUtils.storgeInfo(timeParm.getTranscodedFile().getParentFile(), vodParam);
+	        		} catch (Exception e) {
+	        			e.printStackTrace();
+	        		}
+            	}
             	return this;
             }
             

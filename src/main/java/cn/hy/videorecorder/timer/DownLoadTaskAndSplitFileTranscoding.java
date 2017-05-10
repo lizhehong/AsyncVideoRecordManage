@@ -14,6 +14,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.IntByReference;
 
 import cn.hy.haikang.config.HCNetSDK;
+import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
@@ -113,7 +114,14 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
     			return null;
             }else{
             	//checkDownLoadProgressToTranscoding();
-            	
+            	if(!timeParm.getDownLoadState().equals(DownLoadState.下载中)){
+	            	try {
+	        			timeParm.setDownLoadState(DownLoadState.下载中);
+	        			QueryTimeParamUtils.storgeInfo(timeParm.getTranscodedFile().getParentFile(), vodParam);
+	        		} catch (Exception e) {
+	        			e.printStackTrace();
+	        		}
+            	}
             	return this;
             }
             

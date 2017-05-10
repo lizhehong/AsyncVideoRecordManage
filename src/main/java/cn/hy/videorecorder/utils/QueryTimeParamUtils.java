@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.server.StreamDownLoadServer;
@@ -78,7 +79,11 @@ public class QueryTimeParamUtils {
 		try {
 			for(QueryTimeParam queryTimeParam:queryTimeParams){
 				
-				if(queryTimeParam.getVodReqState().equals(VodRequestState.已经请求)){
+				if(
+						queryTimeParam.getVodReqState().equals(VodRequestState.已经请求)
+						&&
+						queryTimeParam.getDownLoadState().equals(DownLoadState.未下载)
+						){
 					File parentFile = queryTimeParam.getDownLoadFile().getParentFile();
 					if(!parentFile.exists())
 						parentFile.mkdirs();

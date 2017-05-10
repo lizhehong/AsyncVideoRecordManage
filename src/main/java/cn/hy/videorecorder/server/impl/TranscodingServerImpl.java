@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import cn.hy.videorecorder.comparator.TranscodingTaskComparator;
+import cn.hy.videorecorder.entity.type.SortDirection;
 import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.timer.TranscodingTask;
 
@@ -44,21 +46,9 @@ public class TranscodingServerImpl {
 		
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Scheduled(fixedDelay=2000)
 	public void  arrangeTranscodingTask(){
-		//时间降序排序器
-		Comparator<TranscodingTask> c = new Comparator(){
-
-			@Override
-			public int compare(Object a0, Object a1) {
-				TranscodingTask t1 = (TranscodingTask) a0;  
-				TranscodingTask t2 = (TranscodingTask) a1;  
-				long t1StartTime = t1.getQueryTimeParam().getStartTime().getTime();
-				long t2StartTime = t2.getQueryTimeParam().getStartTime().getTime();
-				return (int) (t1StartTime - t2StartTime);
-			}         
-		};
+		
 		List<TranscodingTask> clientTaskList = new ArrayList<>();
 		
 		Iterator<TranscodingTask> iterator = transcodingTasks.iterator();
@@ -71,9 +61,9 @@ public class TranscodingServerImpl {
 			}
 		}
 		
-		Collections.sort(clientTaskList,c);
-		//if(clientTaskList.size() > 0)
-			//logger.info("ffmpeg 转码命令 排序后：{}",clientTaskList);
+		Collections.sort(clientTaskList,new TranscodingTaskComparator(SortDirection.ASC));
+		if(clientTaskList.size() > 0)
+			logger.info("ffmpeg 转码命令 排序后：{}",clientTaskList);
 		
 		iterator = clientTaskList.iterator();
 		

@@ -23,7 +23,7 @@ public class VodParamSerail extends JsonSerializer<VodParam>{
 		SimpleDateFormat sdf = new SimpleDateFormat("yyy-MM-dd HH:mm:ss");
 		
 		gen.writeStringField("startTime",sdf.format(queryTimeParam.getStartTime()));
-		gen.writeStringField("EndTime",sdf.format(queryTimeParam.getEndTime()));
+		gen.writeStringField("endTime",sdf.format(queryTimeParam.getEndTime()));
 		
 		gen.writeStringField("downLoadState",queryTimeParam.getDownLoadState().name());
 		gen.writeStringField("vodReqState",queryTimeParam.getVodReqState().name());
@@ -39,7 +39,7 @@ public class VodParamSerail extends JsonSerializer<VodParam>{
 				gen.writeStringField("sourceName",queryTimeParamItem.getDownLoadFile().getName());
 				gen.writeStringField("downLoadState", queryTimeParamItem.getDownLoadState().name());
 				gen.writeStringField("startTime",sdf.format(queryTimeParamItem.getStartTime()));
-				gen.writeStringField("EndTime",sdf.format(queryTimeParamItem.getEndTime()));
+				gen.writeStringField("endTime",sdf.format(queryTimeParamItem.getEndTime()));
 				
 				gen.writeStringField("vodReqState", queryTimeParamItem.getVodReqState().name());
 				gen.writeEndObject();

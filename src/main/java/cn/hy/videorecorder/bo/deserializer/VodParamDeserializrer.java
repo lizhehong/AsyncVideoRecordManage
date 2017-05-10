@@ -31,10 +31,11 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 	private String downLoadPath;
 	@Override
 	public VodParam deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		VodParam vodParam = new VodParam();
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			JsonNode node = jp.getCodec().readTree(jp);  
-			VodParam vodParam = new VodParam();
+			
 			String monitorId = node.get("parentPathName").textValue();
 			vodParam.setMonitorEntity(monitorRepository.findOne(monitorId));
 			vodParam.setSplitSecStep(node.get("splitSecStep").intValue());
@@ -43,7 +44,7 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 				for(JsonNode videoNoe:videoNodes){
 					QueryTimeParam time = new QueryTimeParam();
 					time.setStartTime(sdf.parse(videoNoe.get("startTime").textValue()));
-					time.setStartTime(sdf.parse(videoNoe.get("EndTime").textValue()));
+					time.setEndTime(sdf.parse(videoNoe.get("endTime").textValue()));
 					time.setVodReqState(VodRequestState.valueOf(videoNoe.get("vodReqState").textValue()));
 					time.setDownLoadState(DownLoadState.valueOf(videoNoe.get("downLoadState").textValue()));
 					time.setTranscodedFile(new File(downLoadPath+monitorId+"/"+videoNoe.get("fileName").asText()));
@@ -54,7 +55,7 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 			
 			QueryTimeParam time = new QueryTimeParam();
 			time.setStartTime(sdf.parse(node.get("startTime").textValue()));
-			time.setStartTime(sdf.parse(node.get("EndTime").textValue()));
+			time.setEndTime(sdf.parse(node.get("endTime").textValue()));
 			time.setVodReqState(VodRequestState.valueOf(node.get("vodReqState").textValue()));
 			time.setDownLoadState(DownLoadState.valueOf(node.get("downLoadState").textValue()));
 			time.setDownLoadFile(new File(downLoadPath+monitorId));
@@ -66,7 +67,7 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 		
 		
 		
-		return null;
+		return vodParam;
 	}
 
 }

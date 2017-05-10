@@ -1,26 +1,37 @@
 package cn.hy.videorecorder.server.impl;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
+import cn.hy.videorecorder.comparator.QueryTimeParamComparator;
 import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.entity.indentity.NetIndentity;
 import cn.hy.videorecorder.entity.indentity.UserIndentity;
 import cn.hy.videorecorder.entity.type.RtspStreamType;
+import cn.hy.videorecorder.entity.type.SortDirection;
 import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 import cn.hy.videorecorder.repository.MonitorRepository;
 import cn.hy.videorecorder.server.MonitorServer;
 import cn.hy.videorecorder.server.SplitTimeDownLoadService;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
+import cn.hy.videorecorder.utils.TimeUtils;
 
 @Service("monitorServer")
 public class MonitorServerImpl implements MonitorServer{
@@ -52,6 +63,14 @@ public class MonitorServerImpl implements MonitorServer{
 	
 	@Autowired @Qualifier("splitTimeDownLoadService")
 	private SplitTimeDownLoadService splitTimeDownLoadService;
+	
+	@Autowired
+	private ObjectMapper objectMapper;
+	
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	
+	@Value("${cache.videoList.cacheMaxCount}")
+	private Integer cacheMaxCount;
 	
 	
 	public String gernatorFFmpegCmdByMonitorEntity(MonitorEntity monitorEntity){
@@ -101,10 +120,86 @@ public class MonitorServerImpl implements MonitorServer{
 				return "";
 		}
 	}
-	public VodParam  startDownLoadActionToVod(VodMonitorForm vodMonitorForm) throws Exception{
+	
+	public VodParam  startDownLoadActionToVodByOldIndexFile(VodMonitorForm vodMonitorForm,File indexFile) throws Exception{
+		
+		if(indexFile != null && indexFile.isFile()){
+			logger.info("进入扩充点播列表");
+			//拿到缓存文件
+			VodParam vodParam  = objectMapper.readValue(indexFile, VodParam.class);
+			
+			QueryTimeParam queryTimeParam = new QueryTimeParam(vodMonitorForm.getStartTime(), vodMonitorForm.getEndTime());
+			//切片用户点播视频 依据系统步长
+			List<QueryTimeParam> newQueryTimeParamList = TimeUtils.fillFullMinAndSplitTime(queryTimeParam , vodParam.getSplitSecStep());
+			//扩展该视频下的播放列表
+			List<QueryTimeParam> oldQueryTimeParamList =vodParam.getQueryTimeParams();
+			//迭代器用于循环中操作
+			Iterator<QueryTimeParam> newQueryTimeParamIterator = newQueryTimeParamList.iterator();
+			
+			int cacheCount = 0;
+			while(newQueryTimeParamIterator.hasNext()){
+				QueryTimeParam newQtp = newQueryTimeParamIterator.next();
+				boolean findOldQtp = false;
+				
+				for(QueryTimeParam oldQtp:oldQueryTimeParamList){
+					if(
+							oldQtp.getStartTime().getTime() == newQtp.getStartTime().getTime()
+							&&
+							oldQtp.getEndTime().getTime() == newQtp.getEndTime().getTime()
+						){
+						
+						//申请视频缓存
+						cacheCount = splitTimeDownLoadService.applyCacheReVideo(cacheCount, cacheMaxCount, vodMonitorForm.getStartTime(), oldQtp);
+						findOldQtp = true;
+						
+						break;
+					}
+				}
+				
+				if(findOldQtp){
+					newQueryTimeParamIterator.remove();
+				}else{
+					File file = vodParam.getTime().getDownLoadFile();
+
+					newQtp.setDownLoadFile(new File(file.getAbsolutePath() + "\\" + "video-" + UUID.randomUUID().toString() + ".mp4"));
+					
+					newQtp.setTranscodedFile(new File(file.getAbsolutePath() + "\\" + "video-" + UUID.randomUUID().toString() + ".mp4"));
+					
+					newQtp.setDownLoadState(DownLoadState.未下载);
+					//申请视频缓存
+					cacheCount = splitTimeDownLoadService.applyCacheReVideo(cacheCount, cacheMaxCount, vodMonitorForm.getStartTime(), newQtp);
+				}
+			}
+			//不存在索引文件的视频 加入索引文件
+			oldQueryTimeParamList.addAll(newQueryTimeParamList);
+			Collections.sort(oldQueryTimeParamList,new QueryTimeParamComparator(SortDirection.ASC));
+			//设置文件索引的总时间
+			QueryTimeParam time = vodParam.getTime();
+			
+			if(vodMonitorForm.getStartTime().getTime() < time.getStartTime().getTime()){
+				time.setStartTime(vodMonitorForm.getStartTime());
+			}
+			
+			if(vodMonitorForm.getEndTime().getTime() > time.getEndTime().getTime()){
+				time.setEndTime(vodMonitorForm.getEndTime());
+			}
+			
+			//异步执行开始任务
+			splitTimeDownLoadService.startTask(vodParam);
+			//固化内存信息
+			QueryTimeParamUtils.storgeInfo(vodParam.getTime().getDownLoadFile(), vodParam);
+			
+			
+			return vodParam;
+		}else
+			return null;
+	}
+	
+	public VodParam  startDownLoadActionToVodByNewIndexFile(VodMonitorForm vodMonitorForm) throws Exception{
 		
 		MonitorEntity monitorEntity = monitorInfoRepository.findOne(vodMonitorForm.getMonitorId());
 		if( monitorEntity !=null ){
+			logger.info("进入点播列表未存在");
 			VodParam vodParam = new VodParam();
 			
 			QueryTimeParam queryTimeParam = new QueryTimeParam();
