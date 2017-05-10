@@ -1,14 +1,19 @@
 $(document).ready(function() {
-	var intInterval = 0;
+	function VodParam(){
+		this.monitorId = $('#hidid').val();
+		this.startTime = new Date($('#startTime').val());
+		this.endTime = new Date($("#endTime").val());
+	}
 	var localVideoList = (function(){
 		var videoList = [];
 		var videoEleId = "example-video";//真正视频标签
 		var applyVideoType = "video/mp4";//视频格式
 		var tmpVideoEleId = "tmpVideo";//临时视频
-		var videoIdTag = $('#hidid');
 		var myPlayer;
 		var playIndex = -1;
-		var indexFile;
+		var indexFile; 
+		var publishVodFlag = false;
+		var curVodParam ;
 		function initVideoEle(){
 			myPlayer = videojs(videoEleId); //初始化视频
 			$('#'+videoEleId).addClass('video-js');
@@ -17,20 +22,36 @@ $(document).ready(function() {
 		function initEvent(){
 			//视频播放停止事件
 			myPlayer.on("ended",function(){
-	    		var video = videoList[playIndex];
+	    		var video = videoList[playIndex++];
 	    		if(!!video){
-	    			playVedio(videoIdTag.val(),video.fileName)
+	    			playVideo(video)
 	    		}
-	    		//通知客户端 已经看完了多少视频 由服务器 去做处理
+	    		
 	    	});
 			//视频播放进度事件
 	    	myPlayer.on("timeupdate",function(){
-	    		var video = videoList[playIndex];
-	    		if(!!indexFile && this.currentTime() > (indexFile.splitSecStep*0.6) && !!video && !video.loaded){//视频缓存 让视频切换不卡	
-	    			video.loaded = true;//相当于自锁
-	    			cacheVideo(video);
+	    		if(!!indexFile && this.currentTime() > (indexFile.splitSecStep*0.6)){
+	    			var nextVideo = getVideoList()[playIndex+1];
+	    			if(!!nextVideo && !nextVideo.loaded){//视频缓存 让视频切换不卡	
+		    			nextVideo.loaded = true;//相当于自锁
+		    			cacheVideo(nextVideo);
+		    		}else if(!nextVideo){
+			    		//查看客户是否播放完毕 如果没有完毕则必须 缓存下个视频
+			    		var thisVideo = getVideoList()[playIndex];
+			    		if(thisVideo.endTime < curVodParam.endTime){
+			    			//通知服务器
+			    			publish_vod({
+			    				param:{
+			    					monitorId:curVodParam.monitorId,
+			    					startTime:thisVideo.endTime,//偏移时间
+			    					endTime:curVodParam.endTime
+			    				}
+			    			});
+			    		}
+			    		
+		    		}
 	    		}
-	    	})
+	    	});
 		}
 		//通过视频的视频找到视频
 		function findVideoInCache(video){
@@ -71,83 +92,114 @@ $(document).ready(function() {
 		function cacheVideo(video){
 			var tmpVideo = document.querySelector("#"+tmpVideoEleId);
 			if(!tmpVideo){
-				var videoTag = $("<video  id='"+tmpVideoEleId+"'src='"+"/"+videoIdTag.val()+"/"+video.fileName+"'></video>");
+				var videoTag = $("<video  id='"+tmpVideoEleId+"'src='"+"/"+curVodParam.monitorId+"/"+video.fileName+"'></video>");
 				videoTag.hide();
 				$("body").append(videoTag);
 			}else{
-				tmpVideo.src="/"+videoIdTag.val()+"/"+video.fileName;
+				tmpVideo.src="/"+curVodParam.monitorId+"/"+video.fileName;
 				tmpVideo.load();
 			}
 		}
 		//视频播放
-		function playVedio(id, filename) {
+		function playVideo(video) {
 	        //播放视频
 			if(!!myPlayer)
-				initVideoEle()
-	        var u = '/' + id + '/' + filename;
+				initVideoEle();
+			while(video.downLoadState != "已经转码");//阻塞检测
+	        var u = '/' + curVodParam.monitorId + '/' + video.fileName;
 	        myPlayer.src([{ src: u, type: applyVideoType }]);
 	        myPlayer.play();
 	  
 		}
+		/**
+		 * [getVideoList 得到视频列表]
+		 * @return {[type]} [description]
+		 */
 		function getVideoList(){
 			updateVideoSort("asc");
 			return videoList;
 		}
+		//开始播放第一个视频
+		function startPlayVideo(){
+			playIndex = 0;
+			playVideo(getVideoList()[playIndex]);
+		}
+		//订阅一个点播
+		function publish_vod(param){
+			var ajaxParam = {
+				type : 'post',
+				async : false,
+				url : "/monitor/publish_vod",
+				cache : false
+			}
+			
+			// 首先开启播放
+			$.ajax($.extends({},ajaxParam,param));
+		}
+		function removeAll(){
+			videoList = [];
+			playIndex = -1;
+		}
+		function refreshVodParam(){
+			curVodParam = new VodParam();
+			return curVodParam;
+		}
 		function refreshIndexFile() {
+			if(publishVodFlag){
+				removeAll();
+				setPublishVodFlag(false);
+				refreshVodParam();
+			}
+			
 			$.ajax({
 				type : 'get',
 				async : false,
-				url : "/" + videoIdTag.val() + "/index.json",
+				url : "/" + curVodParam.monitorId + "/index.json",
 				cache : false,
 				success : function(data) {
 					indexFile = data;
 					var videoList = data.videos;
-					successedMaxNum = data.successedNum;
-					var newVideoList = [];
 					for (var i = 0; i < videoList.length; i++) {
 						var video = videoList[i];
-						var clientStartTime = new Date($('#startTime').val());
-						var clientEndTime = new Date($('#endTime').val());
 						if(
 								video.vodReqState =="已经请求" //切记这个状态 因为视频列表是用户共享的
 								&& 
-								clientStartTime.getTime() <= new Date(video.startTime).getTime()
+								curVodParam.startTime.getTime() <= new Date(video.startTime).getTime()
 								&&//只拿客户点播的视频时间段内视频列表
-								clientEndTime.getTime() >= new Date(video.endTime).getTime())
+								curVodParam.endTime.getTime() >= new Date(video.endTime).getTime())
 						{
 							localVideoList.saveVideoItem(video);
 						}
 					}
+					if(playIndex == -1)
+						startPlayVideo();
 				}
 			});
 		}
+		function setPublishVodFlag(TrueOrFalse){
+			publishVodFlag = TrueOrFalse;
+		}
 		return {
-			playVedio:playVedio,
+			playVideo:playVideo,
 			saveVideoItem:saveVideoItem,
 			findVideoInCache:findVideoInCache,
 			getVideoList:getVideoList,
-			refreshIndexFile:refreshIndexFile
+			refreshIndexFile:refreshIndexFile,
+			publish_vod:publish_vod,
+			refreshVodParam:refreshVodParam,
+			setPublishVodFlag:setPublishVodFlag
 		}
 		
 	})();
 
 	window.localVideoList = localVideoList;
-	//视频播放
 	
+	var intInterval = 0;
 	$("#goBtn").on("click",function() {
-		var param = {
-			monitorId : $('#hidid').val(),
-			startTime : $('#startTime').val(),
-			endTime : $("#endTime").val()
-		};
-		// 首先开启播放
-		$.ajax({
-			type : 'post',
-			async : false,
-			url : "/monitor/publish_vod",
-			data : param,
-			// dataType: 'jsonp',
-			cache : false,
+		localVideoList.setPublishVodFlag(true);
+		var vodParam = localVideoList.refreshVodParam();
+		localVideoList.publish_vod({
+			data : vodParam,
 			success : function(data) {
 				if(!intInterval)
 					intInterval = window.setInterval(localVideoList.refreshIndexFile, 1000);
