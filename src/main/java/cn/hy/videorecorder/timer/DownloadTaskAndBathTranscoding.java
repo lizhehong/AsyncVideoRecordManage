@@ -89,10 +89,10 @@ public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAn
             	
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);
-            	logger.info("下载完毕:{}",timeParm);
+            	//logger.info("下载完毕:{}",timeParm);
             	//执行转码服务
     			if(flag && transcodingServer != null){
-    				logger.info("转码开始：{}",timeParm);
+    				//logger.info("转码开始：{}",timeParm);
     				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm);
     				if(!StringUtils.isEmpty(ffmpegCmdStr)){
     					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,true));

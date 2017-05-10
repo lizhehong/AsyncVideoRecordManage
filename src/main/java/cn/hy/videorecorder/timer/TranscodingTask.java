@@ -57,7 +57,7 @@ public class TranscodingTask implements  Runnable {
 			//删除原来文件
 			if(delOrignFile){
 				//拿到转码后的文件
-				File transcondedFile = queryTimeParam.getFile();
+				File transcondedFile = queryTimeParam.getDownLoadFile();
 				//删除原文件
 				String fileName = transcondedFile.getName();
 				fileName =(fileName.substring(0, fileName.indexOf(".")))+".mp4";
@@ -67,9 +67,9 @@ public class TranscodingTask implements  Runnable {
 			}
 			
 			//固化内存信息
-			QueryTimeParamUtils.storgeInfo(queryTimeParam.getFile().getParentFile(), vodParam);
+			QueryTimeParamUtils.storgeInfo(queryTimeParam.getTranscodedFile().getParentFile(), vodParam);
 			
-			logger.info("转码成功：{},删除源文件：{}",queryTimeParam,orignFilePath);
+			//logger.info("转码成功：{},删除源文件：{}",queryTimeParam,orignFilePath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

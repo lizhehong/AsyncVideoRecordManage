@@ -22,7 +22,8 @@ $(document).ready(function() {
             //播放视频
             var myPlayer = videojs("example-video");  //初始化视频
             var u = '/' + id + '/' + filename;
-            myPlayer.src([{ src: u, type: 'video/flv' }]);
+            //myPlayer.src([{ src: u, type: 'video/flv' }]);
+            myPlayer.src([{ src: u, type: 'video/mp4' }]);
             //myPlayer.load(u);  //使video重新加载
             myPlayer.play();
             nowIndex++;
@@ -37,8 +38,20 @@ $(document).ready(function() {
             	});
             	myPlayer.on("timeupdate",function(){
             		var video = successVideoList[nowIndex];
-            		if(this.currentTime > (video.splitSecStep*0.6)){//视频缓存 让视频切换不卡
-            			$.get("/"+$('#hidid').val()+"/"+video.fileName);
+            		if(!!indexFile && this.currentTime() > (indexFile.splitSecStep*0.6) && !!video && !video.loaded){//视频缓存 让视频切换不卡	
+            			video.loaded = true;
+            			var videoId = "tmpVideo";
+            			var tmpVideo = document.querySelector("#"+videoId);
+            			if(!tmpVideo){
+            				var videoTag = $("<video  id='"+videoId+"'src='"+"/"+$('#hidid').val()+"/"+video.fileName+"'></video>");
+            				videoTag.hide();
+            				$("body").append(videoTag);
+            				console.log("上次播放："+successVideoList[nowIndex - 1].startTime,"需要提前缓存:"+video.startTime)
+            			}else{
+            				tmpVideo.src="/"+$('#hidid').val()+"/"+video.fileName;
+            				tmpVideo.load();
+            				console.log("上次播放："+successVideoList[nowIndex - 1].startTime,"需要提前缓存:"+video.startTime)
+            			}	
             		}
             	})
             }

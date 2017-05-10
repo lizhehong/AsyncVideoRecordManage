@@ -21,12 +21,8 @@ public class QueryTimeParamUtils {
 	
 	private static Logger logger = LoggerFactory.getLogger(QueryTimeParamUtils.class);
 	
-	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam,int secStep,String offsetDate,File orginFile){
+	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam,int secStep,String offsetDate){
 		try {
-			File file = queryTimeParam.getFile();
-			String fileName =  file.getName();
-			
-			fileName = fileName.substring(0,fileName.lastIndexOf("."))+".flv";
 			//TODO 禁止输出减少 进程缓冲器不会溢出 同时限制CPU使用率
 			//全速转码
 			String command = "ffmpeg -y "
@@ -35,15 +31,13 @@ public class QueryTimeParamUtils {
 							
 							+ " -t "+ secStep +
 			
-							" -i " + orginFile.getAbsolutePath() +
+							" -i " + queryTimeParam.getDownLoadFile().getAbsolutePath() +
 							
-							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f flv "+
+							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
 							
-							file.getParentFile().getAbsolutePath()+
-							
-							"\\"+fileName;
+							queryTimeParam.getTranscodedFile().getAbsolutePath();
+			
 			logger.info("当前的视频转换命令：{}",command);
-			queryTimeParam.setFile(new File(file.getParentFile(),fileName));
 			
 			return command;
 			
@@ -60,24 +54,18 @@ public class QueryTimeParamUtils {
 	 */
 	public static String transcodingWithGenernatorCmd(QueryTimeParam queryTimeParam){
 		try {
-			File file = queryTimeParam.getFile();
-			String fileName =  file.getName();
-			
-			fileName = fileName.substring(0,fileName.lastIndexOf("."))+".flv";
 			//TODO 禁止输出减少 进程缓冲器不会溢出 同时限制CPU使用率
 			//全速转码
 			String command = "ffmpeg -y -i " +
 			
-							file.getAbsolutePath() +
+							queryTimeParam.getDownLoadFile().getAbsolutePath() +
 							
-							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f flv "+
+							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
 							//" -c:v copy -loglevel quiet -an -f flv " +
 							
-							file.getParentFile().getAbsolutePath()+
-							
-							"\\"+fileName;
-			System.out.println(command);
-			queryTimeParam.setFile(new File(file.getParentFile(),fileName));
+							queryTimeParam.getTranscodedFile().getAbsolutePath();
+			
+			logger.info("当前的视频转换命令：{}",command);
 			
 			return command;
 			
@@ -91,7 +79,7 @@ public class QueryTimeParamUtils {
 			for(QueryTimeParam queryTimeParam:queryTimeParams){
 				
 				if(queryTimeParam.getVodReqState().equals(VodRequestState.已经请求)){
-					File parentFile = queryTimeParam.getFile().getParentFile();
+					File parentFile = queryTimeParam.getDownLoadFile().getParentFile();
 					if(!parentFile.exists())
 						parentFile.mkdirs();
 					//保证文件存在的情况下 才进行下载任务

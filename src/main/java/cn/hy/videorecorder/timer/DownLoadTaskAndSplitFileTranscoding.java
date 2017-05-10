@@ -99,7 +99,7 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
             	
             	//停止文件下载信号
             	boolean flag = hCNetSDK.NET_DVR_StopGetFile(lFileHandle);
-            	long sizeLen = timeParm.getFile().length();
+            	long sizeLen = timeParm.getDownLoadFile().length();
             	long timeLen = new Date().getTime()-taskStartTime.getTime();
             	logger.info("运行时间:{},文件大小:{},网速：{},下载完毕:{}",timeLen,sizeLen,sizeLen/(timeLen*1.024),timeParm);
             	//执行转码服务
@@ -127,10 +127,8 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
 
 
 	private void checkDownLoadProgressToTranscoding() {
-		File file = timeParm.getFile();
+		File file = timeParm.getDownLoadFile();
 		
-		String fileName = file.getName().substring(0,file.getName().lastIndexOf("."));
-		file = new File(timeParm.getFile().getParentFile(),fileName+".mp4");
 		//该视频点播源文件每秒的文件大小
 		long vodSizeByperSec= vodParam.getMonitorEntity().getVodSizeByperSec();
 		//检测文件是否到达指定的步长倍数
@@ -157,13 +155,11 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
 				String offsetDate =	hourDiff + ":" +
 									(curMinute - minute) + ":" +
 									(curSec - sec)+".000";
-				//加上一个识别不同时间的码
-				File curFile = timeParm.getFile();
-				timeParm.setFile(new File(timeParm.getFile().getParentFile(),fileName+"_"+multiple+".flv"));
-				//还没进过抽取解码
-				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm,vodParam.getSplitSecStep(),offsetDate,file);
 				
-				timeParm.setFile(curFile);
+				//还没进过抽取解码
+				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm,vodParam.getSplitSecStep(),offsetDate);
+				
+				
 				if(!StringUtils.isEmpty(ffmpegCmdStr)){
 					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,false));
 				}

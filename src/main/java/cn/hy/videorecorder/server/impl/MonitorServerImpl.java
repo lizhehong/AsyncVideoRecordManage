@@ -112,7 +112,7 @@ public class MonitorServerImpl implements MonitorServer{
 			queryTimeParam.setVodReqState(VodRequestState.已经请求);
 			queryTimeParam.setEndTime(vodMonitorForm.getEndTime());
 			queryTimeParam.setStartTime(vodMonitorForm.getStartTime());
-			queryTimeParam.setFile(new File(downLoadPath+monitorEntity.getId()));
+			queryTimeParam.setDownLoadFile(new File(downLoadPath+monitorEntity.getId()));
 			
 			vodParam.setTime(queryTimeParam);
 			vodParam.setMonitorEntity(monitorEntity);
@@ -123,7 +123,7 @@ public class MonitorServerImpl implements MonitorServer{
 			//异步执行开始任务
 			splitTimeDownLoadService.startTask(vodParam);
 			//固话内存信息
-			QueryTimeParamUtils.storgeInfo(queryTimeParam.getFile(), vodParam);
+			QueryTimeParamUtils.storgeInfo(queryTimeParam.getDownLoadFile(), vodParam);
 			
 			return vodParam;
 		}else{

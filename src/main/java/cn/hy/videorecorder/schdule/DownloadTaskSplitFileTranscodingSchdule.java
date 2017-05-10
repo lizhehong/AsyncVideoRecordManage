@@ -43,7 +43,7 @@ public class DownloadTaskSplitFileTranscodingSchdule implements DownLoadTranscod
 	public void addDownloadTask(CallableI<DownLoadTaskAndSplitFileTranscoding> downloadTask){
 		//拿到当前需要下载的时间片段
 		QueryTimeParam timeParam =  downloadTask.getTimeParm();
-		File localFile = new File(timeParam.getFile().getParentFile(),"index.json");
+		File localFile = new File(timeParam.getDownLoadFile().getParentFile(),"index.json");
 		//TODO 检测是否下载 如果是则 无需进入
 	
 		

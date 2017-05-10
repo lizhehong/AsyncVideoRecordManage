@@ -74,7 +74,7 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 		
 		NativeLong lPreviewHandle = hCNetSDK.NET_DVR_GetFileByTime(userId,
 				new NativeLong(vodParam.getMonitorEntity().getChannelNum()), struStartTime, struStopTime,
-				timeParm.getFile().getAbsolutePath());
+				timeParm.getDownLoadFile().getAbsolutePath());
 		if (lPreviewHandle.intValue() < 0) {
 			timeParm.setDownLoadState(DownLoadState.未下载);
 			logger.warn("海康全局错误代码{},userId:{},channel:{},{},当前时间参数：{}", hCNetSDK.NET_DVR_GetLastError(), userId,
@@ -139,11 +139,11 @@ public class HaiKangServerImpl implements StreamDownLoadServer{
 		try {
 			QueryTimeParam queryTimeParam = vodParam.getTime();
 			vodParam.setQueryTimeParams(Arrays.asList(queryTimeParam));
-			File file = queryTimeParam.getFile();
+			File file = queryTimeParam.getDownLoadFile();
 			if(!file.exists())
 				file.mkdirs();
 			if(!file.isFile())
-				queryTimeParam.setFile(new File(file,"video-"+UUID.randomUUID().toString()+".mp4"));
+				queryTimeParam.setDownLoadFile(new File(file,"video-"+UUID.randomUUID().toString()+".mp4"));
 			downLoadByTimeZone(queryTimeParam);
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -27,11 +27,11 @@ public class DownLoadWithSplitFileTask implements Runnable {
 		try {
 			QueryTimeParam queryTimeParam = vodParam.getTime();
 			vodParam.setQueryTimeParams(Arrays.asList(queryTimeParam));
-			File file = queryTimeParam.getFile();
+			File file = queryTimeParam.getDownLoadFile();
 			if(!file.exists())
 				file.mkdirs();
 			if(!file.isFile())
-				queryTimeParam.setFile(new File(file,"video-"+UUID.randomUUID().toString()+".mp4"));
+				queryTimeParam.setDownLoadFile(new File(file,"video-"+UUID.randomUUID().toString()+".mp4"));
 			streamDownLoadServer.downLoadByTimeZone(queryTimeParam);
 		} catch (Exception e) {
 			e.printStackTrace();

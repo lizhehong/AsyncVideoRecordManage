@@ -57,14 +57,12 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 			// 老的需要分割的时间
 			QueryTimeParam queryTimeParam = oldQueryTimeParams.get(i);
 			// 拼接文件名字
-			File file = vodParam.getTime().getFile();
-			// 固定的文件前缀
-			String newFilename = "video-" + UUID.randomUUID().toString();
-			String suffix = ".mp4";
-			// 新数据文件地址
-			File newFile = new File(file.getAbsolutePath() + "\\" + newFilename + suffix);
+			File file = vodParam.getTime().getDownLoadFile();
 
-			queryTimeParam.setFile(newFile);
+			queryTimeParam.setDownLoadFile(new File(file.getAbsolutePath() + "\\" + "video-" + UUID.randomUUID().toString() + ".mp4"));
+			
+			queryTimeParam.setTranscodedFile(new File(file.getAbsolutePath() + "\\" + "video-" + UUID.randomUUID().toString() + ".mp4"));
+			
 			queryTimeParam.setDownLoadState(DownLoadState.未下载);
 			if(cacheCount > 0 && cacheCount < cacheMaxCount){//说明已经找到了第一个
 				queryTimeParam.setVodReqState(VodRequestState.已经请求);

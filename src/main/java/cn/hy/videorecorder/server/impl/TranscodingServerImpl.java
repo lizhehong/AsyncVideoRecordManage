@@ -72,8 +72,8 @@ public class TranscodingServerImpl {
 		}
 		
 		Collections.sort(clientTaskList,c);
-		if(clientTaskList.size() > 0)
-			logger.info("ffmpeg 转码命令 排序后：{}",clientTaskList);
+		//if(clientTaskList.size() > 0)
+			//logger.info("ffmpeg 转码命令 排序后：{}",clientTaskList);
 		
 		iterator = clientTaskList.iterator();
 		

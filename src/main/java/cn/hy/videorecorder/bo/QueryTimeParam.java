@@ -14,7 +14,9 @@ public class QueryTimeParam {
 	
 	private Date endTime;
 	
-	private File file;
+	private File transcodedFile;
+	
+	private File downLoadFile;
 	
 	private DownLoadState downLoadState;
 	

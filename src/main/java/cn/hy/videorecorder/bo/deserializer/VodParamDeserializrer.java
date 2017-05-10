@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
-import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.repository.MonitorRepository;
 
@@ -47,18 +46,18 @@ public class VodParamDeserializrer extends JsonDeserializer<VodParam>  {
 					time.setStartTime(sdf.parse(videoNoe.get("EndTime").textValue()));
 					time.setVodReqState(VodRequestState.valueOf(videoNoe.get("vodReqState").textValue()));
 					time.setDownLoadState(DownLoadState.valueOf(videoNoe.get("downLoadState").textValue()));
-					time.setFile(new File(downLoadPath+monitorId+"/"+videoNoe.get("fileName").asText()));
+					time.setTranscodedFile(new File(downLoadPath+monitorId+"/"+videoNoe.get("fileName").asText()));
+					time.setDownLoadFile(new File(downLoadPath+monitorId+"/"+videoNoe.get("sourceName").asText()));
 					vodParam.getQueryTimeParams().add(time);
 				}
 			}
-			//vodParam.setQueryTimeParams(queryTimeParams);
 			
 			QueryTimeParam time = new QueryTimeParam();
 			time.setStartTime(sdf.parse(node.get("startTime").textValue()));
 			time.setStartTime(sdf.parse(node.get("EndTime").textValue()));
 			time.setVodReqState(VodRequestState.valueOf(node.get("vodReqState").textValue()));
 			time.setDownLoadState(DownLoadState.valueOf(node.get("downLoadState").textValue()));
-			time.setFile(new File(downLoadPath+monitorId));
+			time.setDownLoadFile(new File(downLoadPath+monitorId));
 			
 			vodParam.setTime(time );
 		} catch (ParseException e) {
