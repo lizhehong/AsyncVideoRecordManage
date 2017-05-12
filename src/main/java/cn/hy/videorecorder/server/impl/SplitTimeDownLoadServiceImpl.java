@@ -52,7 +52,7 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	public void createTimeSplitTask(VodParam vodParam) throws Exception {
 		// 分割好的时间片段 
 		List<QueryTimeParam> oldQueryTimeParams = TimeUtils.fillFullMinAndSplitTime(vodParam.getTime(),
-				vodParam.getSplitSecStep());
+				vodParam.getSplitSecStep(),cacheMaxCount);
 		int cacheCount = 0;
 		
 		Date startTime = vodParam.getTime().getStartTime();

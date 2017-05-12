@@ -72,6 +72,9 @@ public class MonitorServerImpl implements MonitorServer{
 	@Value("${cache.videoList.cacheMaxCount}")
 	private Integer cacheMaxCount;
 	
+	@Value("${download.path}")
+	private String downloadPath;
+	
 	
 	public String gernatorFFmpegCmdByMonitorEntity(MonitorEntity monitorEntity){
 		String rtspUrl = createLiveAddress(monitorEntity);
@@ -130,7 +133,7 @@ public class MonitorServerImpl implements MonitorServer{
 			
 			QueryTimeParam queryTimeParam = new QueryTimeParam(vodMonitorForm.getStartTime(), vodMonitorForm.getEndTime());
 			//切片用户点播视频 依据系统步长
-			List<QueryTimeParam> newQueryTimeParamList = TimeUtils.fillFullMinAndSplitTime(queryTimeParam , vodParam.getSplitSecStep());
+			List<QueryTimeParam> newQueryTimeParamList = TimeUtils.fillFullMinAndSplitTime(queryTimeParam , vodParam.getSplitSecStep(),cacheMaxCount);
 			//扩展该视频下的播放列表
 			List<QueryTimeParam> oldQueryTimeParamList =vodParam.getQueryTimeParams();
 			//迭代器用于循环中操作
@@ -224,5 +227,26 @@ public class MonitorServerImpl implements MonitorServer{
 		}else{
 			return null;
 		}
+	}
+	/**
+	 * 发布一个点播
+	 * @param vodMonitorForm
+	 * @return
+	 * @throws Exception
+	 */
+	public VodParam  publishVodMonitor(VodMonitorForm vodMonitorForm) throws Exception{
+		
+		String monitorId = vodMonitorForm.getMonitorId();
+		
+		File indexFile = new File(downloadPath+monitorId+"/index.json");
+		
+		if(indexFile.exists()){
+			VodParam param = startDownLoadActionToVodByOldIndexFile(vodMonitorForm,indexFile);
+			if(param == null)
+				return  startDownLoadActionToVodByNewIndexFile(vodMonitorForm);
+			else 
+				return param;
+		}else
+			return startDownLoadActionToVodByNewIndexFile(vodMonitorForm);
 	}
 }

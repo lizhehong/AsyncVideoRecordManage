@@ -82,7 +82,7 @@ public class TimeUtils {
 	 * @param secondStep 		秒步长
 	 * @return
 	 */
-	public static List<QueryTimeParam> fillFullMinAndSplitTime(QueryTimeParam queryTimeParam,int secondStep) {
+	public static List<QueryTimeParam> fillFullMinAndSplitTime(QueryTimeParam queryTimeParam,int secondStep,int cacheMaxCount) {
 		List<QueryTimeParam> queryTimeParams = new ArrayList<>();
 		if( queryTimeParam.getEndTime()!=null && queryTimeParam.getStartTime()!=null ){	
 			//时间节点化为整分
@@ -94,6 +94,9 @@ public class TimeUtils {
 
 			//拿到切片个数
 			long num = (timeLong/(1000*secondStep));
+			//限制
+			if(num > cacheMaxCount)
+				num = cacheMaxCount + 1;
 			logger.info("切片数：{},时长：{},开始：{},结束：{}",num,timeLong,startTime,endTime);
 		
 			Calendar calendar = Calendar.getInstance();
@@ -110,7 +113,7 @@ public class TimeUtils {
 					queryTimeParams.add(newQueryTime);
 					startTime = calendar.getTime();//末尾时间作为第二次的开始时间
 				}
-				//防止步长不是整时倍
+				//防止步长不是整分倍
 				if(!startTime.equals(endTime)){
 					//最后的时长
 					QueryTimeParam newQueryTime = new QueryTimeParam();

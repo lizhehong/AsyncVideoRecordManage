@@ -37,4 +37,12 @@ public interface MonitorServer {
 	 * @throws Exception
 	 */
 	public VodParam  startDownLoadActionToVodByOldIndexFile(VodMonitorForm vodMonitorForm,File indexFile) throws Exception;
+
+	/**
+	 * 发布一个点播
+	 * @param vodMonitorForm
+	 * @return
+	 * @throws Exception
+	 */
+	public VodParam  publishVodMonitor(VodMonitorForm vodMonitorForm) throws Exception;
 }

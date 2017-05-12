@@ -1,18 +1,10 @@
 package cn.hy.videorecorder.ctr.rest;
 
-
-import java.io.File;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
@@ -31,17 +23,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
-import cn.hy.videorecorder.comparator.QueryTimeParamComparator;
-import cn.hy.videorecorder.comparator.TranscodingTaskComparator;
 import cn.hy.videorecorder.entity.MonitorEntity;
 import cn.hy.videorecorder.entity.type.CallType;
-import cn.hy.videorecorder.entity.type.SortDirection;
 import cn.hy.videorecorder.entity.type.VideoRecordUserType;
-import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.form.monitor.AddOneMonitorForm;
 import cn.hy.videorecorder.form.monitor.UpdateOneMonitorForm;
 import cn.hy.videorecorder.form.monitor.VodMonitorForm;
@@ -55,9 +40,6 @@ import io.swagger.annotations.ApiParam;
 
 @RestController
 public class MonitorCtr {
-
-	@Value("${download.path}")
-	private String downloadPath;
 	
 	@Autowired
 	private MonitorRepository monitorInfoRepository;
@@ -156,18 +138,7 @@ public class MonitorCtr {
 	public VodParam publishVodMonitor(
 			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
 		
-		String monitorId = vodMonitorForm.getMonitorId();
-		
-		File indexFile = new File(downloadPath+monitorId+"/index.json");
-		
-		if(indexFile.exists()){
-			VodParam param = monitorServer.startDownLoadActionToVodByOldIndexFile(vodMonitorForm,indexFile);
-			if(param == null)
-				return  monitorServer.startDownLoadActionToVodByNewIndexFile(vodMonitorForm);
-			else 
-				return param;
-		}else
-			return monitorServer.startDownLoadActionToVodByNewIndexFile(vodMonitorForm);
+		return monitorServer.publishVodMonitor(vodMonitorForm);
 		
 	}
 	@ApiOperation(value = "发布一个直播视频(ip,通道,类型)", notes = "如果重复 则 拿第一个")

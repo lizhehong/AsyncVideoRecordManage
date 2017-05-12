@@ -1,25 +1,72 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
-    <meta name="viewport" content="width=device-width" />
+    <meta charset="utf-8"></meta> <!-- set character encoding for the document -->
+	<meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"></meta>
     <title></title>
-    <script type="text/javascript" src="/bower_components/jquery/dist/jquery.min.js"></script>
-    <link href="//vjs.zencdn.net/5.11/video-js.min.css" rel="stylesheet" />
-    <script src="//vjs.zencdn.net/5.11/video.min.js"></script>
-    <script src="https://unpkg.com/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
-    <script type="text/javascript" src="/js/vod.js"></script>
+    <link href="/node_modules/video.js/dist/video-js.min.css" rel="stylesheet" />
+    <link href="/node_modules/videojs-watermark-with-text/dist/videojs-watermark.css" rel="stylesheet" />
+	<link href="/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
+	<style>
+		.mainVideoContrainer{
+		 	width: 100%;
+		 	padding: 0px;
+		}
+		#example-video{
+			/*修复尺寸*/
+            width: 100%;
+            height: 300px;
+            max-height: 100%;
+		}
+		#logMessage{
+			height: 600px;
+			background-color:gray;
+			overflow: scroll;
+		}
+		#tmpVideo{
+		height: 600px;
+		width: 600px;
+			
+		}
+	</style>
 <body>
-	<label for="hidid">视频id：</label>
-	<input type="text" value="c0a80013-5bd6-123f-815b-d6a4c61c0007" id="hidid" />
-	<label for="startTime">开始时间：</label>
-	<input type="text" value="2017-05-05 08:00:00" id="startTime" />
-	<label for="endTime">停止时间：</label>
-	<input type="text" value="2017-05-05 08:10:00" id="endTime" />
-	<button id="goBtn">开始回放：</button>
-    <video id="example-video" width="600" height="300" class="vjs-default-skin" controls="controls" ></video>
+	<!-- <label for="hidid">视频id：</label>-->
+	<input type="hidden" th:value="${vodParam.monitorId}" id="hidid" />
+	<!-- <label for="startTime">开始时间：</label>-->
+	<input type="hidden" th:value="${#calendars.format(vodParam.startTime,'yyyy-MM-dd HH:mm:ss')}" id="startTime" />
+	<!-- <label for="endTime">停止时间：</label>-->
+	<input type="hidden" th:value="${#calendars.format(vodParam.endTime,'yyyy-MM-dd HH:mm:ss')}" id="endTime" />
+	<!--  <button id="goBtn">开始回放：</button>-->
+    <div class="container-fluid">
+  	<div class="row">
+  		<div class="mainVideoContrainer col-xs-12 col-sm-12 col-md-12 col-lg-8">
+  			<video id="example-video" class="vjs-default-skin" controls="controls" autoplay="autoplay"></video>
+  		</div>
+  	</div>
+  	<div class="row">
+  		<div id='logMessage' class="col-xs-12 col-sm-12 col-md-12 col-lg-12"></div>
+  	</div>
+  	<div class="row">
+  		<div class="col-sm-12  col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  			<video id="tmpVideo" autoplay="autoplay" controls="controls" ></video>
+  		</div>
+  	</div>
+	</div>
+    
+    
+	
+	
 </body>
-
-
+	<script type="text/javascript" src="/bower_components/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script src="/node_modules/videojs-ie8/dist/videojs-ie8.js"></script>
+    <script src="/node_modules/video.js/dist/video.min.js"></script>
+    <script src="/node_modules/videojs-watermark-with-text/dist/videojs-watermark.min.js"></script>
+    <script src="/node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.min.js"></script>
+    <script type="text/javascript" src="/js/log.js"></script>
+    <script type="text/javascript" src="/js/vod.js"></script>
+ 	
 
 </html>

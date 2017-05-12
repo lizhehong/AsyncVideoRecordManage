@@ -11,5 +11,9 @@
   "authors": [
     "lizhehong"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "bootstrap": "^3.3.7"
+  }
 }

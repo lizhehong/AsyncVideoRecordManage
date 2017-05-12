@@ -1,8 +1,8 @@
 $(document).ready(function() {
 	function VodParam(){
 		this.monitorId = $('#hidid').val();
-		this.startTime = new Date($('#startTime').val());
-		this.endTime = new Date($("#endTime").val());
+		this.startTime = $('#startTime').val();
+		this.endTime = $("#endTime").val();
 	}
 	var localVideoList = (function(){
 		var videoList = [];
@@ -12,36 +12,52 @@ $(document).ready(function() {
 		var myPlayer;
 		var playIndex = -1;
 		var indexFile; 
-		var publishVodFlag = false;
 		var curVodParam ;
+		var applyPublishNextVodFlag = false;
+		var tmpVideoCacheEventFlag = false;
 		function initVideoEle(){
 			myPlayer = videojs(videoEleId); //初始化视频
 			$('#'+videoEleId).addClass('video-js');
 			initEvent();//事件初始化
+			initVideoPlugin();//插件初始化
+		}
+		function initVideoPlugin(){
+			myPlayer.watermark({
+			 	position: 'top-right',
+			 	url: 'http://www.515cn.com',
+			 	image: 'https://ss1.baidu.com/6ONXsjip0QIZ8tyhnq/it/u=3594708763,1434851869&fm=58',
+			 	opacity: 0,
+			 });
 		}
 		function initEvent(){
 			//视频播放停止事件
 			myPlayer.on("ended",function(){
-	    		var video = videoList[playIndex++];
+	    		var video = videoList[++playIndex];
 	    		if(!!video){
-	    			playVideo(video)
+	    			var message = localLog.createMessage("开始时间："+video.startTime +"-结束时间："+ video.endTime,"开始播放视频");
+					localLog.printf(message)
+	    			playVideo(video);
+	    			applyPublishNextVodFlag = false;
 	    		}
 	    		
 	    	});
 			//视频播放进度事件
 	    	myPlayer.on("timeupdate",function(){
-	    		if(!!indexFile && this.currentTime() > (indexFile.splitSecStep*0.6)){
+	    		//localLog.printf(localLog.createMessage(this.currentTime(),"当前文件进度"))
+	    		if(!!indexFile && this.currentTime() > (indexFile.splitSecStep*0.1)){
 	    			var nextVideo = getVideoList()[playIndex+1];
-	    			if(!!nextVideo && !nextVideo.loaded){//视频缓存 让视频切换不卡	
-		    			nextVideo.loaded = true;//相当于自锁
+	    			if(!!nextVideo && !nextVideo.loaded){//视频缓存 让视频切换不卡
 		    			cacheVideo(nextVideo);
 		    		}else if(!nextVideo){
 			    		//查看客户是否播放完毕 如果没有完毕则必须 缓存下个视频
 			    		var thisVideo = getVideoList()[playIndex];
-			    		if(thisVideo.endTime < curVodParam.endTime){
+			    		if(!applyPublishNextVodFlag && thisVideo.endTime < curVodParam.endTime){
+			    			var message = localLog.createMessage("开始时间："+thisVideo.endTime +"-结束时间："+ curVodParam.endTime,"异步通知服务器缓存视频开始");
+							localLog.printf(message)
+			    			applyPublishNextVodFlag = true;
 			    			//通知服务器
 			    			publish_vod({
-			    				param:{
+			    				data:{
 			    					monitorId:curVodParam.monitorId,
 			    					startTime:thisVideo.endTime,//偏移时间
 			    					endTime:curVodParam.endTime
@@ -91,24 +107,43 @@ $(document).ready(function() {
 		//缓存视频
 		function cacheVideo(video){
 			var tmpVideo = document.querySelector("#"+tmpVideoEleId);
-			if(!tmpVideo){
-				var videoTag = $("<video  id='"+tmpVideoEleId+"'src='"+"/"+curVodParam.monitorId+"/"+video.fileName+"'></video>");
-				videoTag.hide();
-				$("body").append(videoTag);
-			}else{
-				tmpVideo.src="/"+curVodParam.monitorId+"/"+video.fileName;
-				tmpVideo.load();
+			try{
+				if(!tmpVideo){
+					var videoTag = $("<video  style='width:300px;height:300px;'id='"+tmpVideoEleId+"'src='"+"/"+curVodParam.monitorId+"/"+video.fileName+"'></video>");
+					//videoTag.hide();
+					$("body").append(videoTag);
+					tmpVideo = document.querySelector("#"+tmpVideoEleId);
+				}else{
+					tmpVideo.src="/"+curVodParam.monitorId+"/"+video.fileName;
+					tmpVideo.load();
+				}
+				video.loaded = true;//相当于自锁
+				
+			}catch(err){
+				var message = localLog.createMessage("开始时间："+video.startTime +"-结束时间："+ video.endTime,"缓存视频列表【错误】");
+				localLog.printf(message)
+				video.loaded = false;
+			}finally{
+				if(tmpVideo && !tmpVideoCacheEventFlag){
+					localLog.printf(localLog.createMessage("播放事件","设置临时播放器"))
+					tmpVideo.oncanplay = function(){
+						var message = localLog.createMessage("开始时间："+video.startTime +"-结束时间："+ video.endTime,"缓存视频成功");
+						localLog.printf(message)
+					}
+					tmpVideoCacheEventFlag = true;
+				}
 			}
 		}
 		//视频播放
 		function playVideo(video) {
 	        //播放视频
-			if(!!myPlayer)
+			if(!myPlayer)
 				initVideoEle();
-			while(video.downLoadState != "已经转码");//阻塞检测
+			//while(video.downLoadState != "已经转码");//阻塞检测
 	        var u = '/' + curVodParam.monitorId + '/' + video.fileName;
 	        myPlayer.src([{ src: u, type: applyVideoType }]);
 	        myPlayer.play();
+	        initVideoPlugin();
 	  
 		}
 		/**
@@ -121,8 +156,12 @@ $(document).ready(function() {
 		}
 		//开始播放第一个视频
 		function startPlayVideo(){
-			playIndex = 0;
-			playVideo(getVideoList()[playIndex]);
+			var tmpIndex = 0;
+			var video = getVideoList()[tmpIndex];
+			if(video && video.downLoadState == "已经转码"){
+				playIndex = tmpIndex;
+				playVideo(video);
+			}
 		}
 		//订阅一个点播
 		function publish_vod(param){
@@ -134,7 +173,7 @@ $(document).ready(function() {
 			}
 			
 			// 首先开启播放
-			$.ajax($.extends({},ajaxParam,param));
+			$.ajax($.extend({},ajaxParam,param));
 		}
 		function removeAll(){
 			videoList = [];
@@ -144,12 +183,11 @@ $(document).ready(function() {
 			curVodParam = new VodParam();
 			return curVodParam;
 		}
+		//yyyy-MM-dd HH:mm:ss
+		function commomDateFormat(dateStr){
+			return new Date(dateStr .substr(0,10)+"T"+dateStr .substr(11,8))
+		}
 		function refreshIndexFile() {
-			if(publishVodFlag){
-				removeAll();
-				setPublishVodFlag(false);
-				refreshVodParam();
-			}
 			
 			$.ajax({
 				type : 'get',
@@ -161,13 +199,13 @@ $(document).ready(function() {
 					var videoList = data.videos;
 					for (var i = 0; i < videoList.length; i++) {
 						var video = videoList[i];
-						if(
-								video.vodReqState =="已经请求" //切记这个状态 因为视频列表是用户共享的
-								&& 
-								curVodParam.startTime.getTime() <= new Date(video.startTime).getTime()
-								&&//只拿客户点播的视频时间段内视频列表
-								curVodParam.endTime.getTime() >= new Date(video.endTime).getTime())
-						{
+						var flag = video.vodReqState =="已经请求" //切记这个状态 因为视频列表是用户共享的
+						//只拿客户点播的视频时间段内视频列表
+						var flag1 = commomDateFormat(curVodParam.startTime).getTime() <= commomDateFormat(video.startTime).getTime();
+						var flag2 = commomDateFormat(curVodParam.endTime).getTime() >= commomDateFormat(video.endTime).getTime();
+								
+						
+						if(flag && flag1 && flag2){
 							localVideoList.saveVideoItem(video);
 						}
 					}
@@ -176,9 +214,7 @@ $(document).ready(function() {
 				}
 			});
 		}
-		function setPublishVodFlag(TrueOrFalse){
-			publishVodFlag = TrueOrFalse;
-		}
+
 		return {
 			playVideo:playVideo,
 			saveVideoItem:saveVideoItem,
@@ -187,23 +223,16 @@ $(document).ready(function() {
 			refreshIndexFile:refreshIndexFile,
 			publish_vod:publish_vod,
 			refreshVodParam:refreshVodParam,
-			setPublishVodFlag:setPublishVodFlag
+			//setPublishVodFlag:setPublishVodFlag
 		}
 		
 	})();
 
 	window.localVideoList = localVideoList;
 	
-	var intInterval = 0;
-	$("#goBtn").on("click",function() {
-		localVideoList.setPublishVodFlag(true);
-		var vodParam = localVideoList.refreshVodParam();
-		localVideoList.publish_vod({
-			data : vodParam,
-			success : function(data) {
-				if(!intInterval)
-					intInterval = window.setInterval(localVideoList.refreshIndexFile, 1000);
-			}
-		});
-	});
+	//刷新参数
+	localVideoList.refreshVodParam();
+	
+	var intInterval = window.setInterval(localVideoList.refreshIndexFile, 1000);
+	
 });
