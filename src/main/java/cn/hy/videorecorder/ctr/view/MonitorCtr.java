@@ -33,6 +33,8 @@ public class MonitorCtr {
 	public ModelAndView vod(@ModelAttribute @Valid VodMonitorForm vodMonitorForm) throws Exception{
 		ModelAndView mav = new ModelAndView("/vod");
 		
+		mav.addObject("videoSpeedUpNum", vodMonitorForm.getSppeedUpNum());
+	
 		VodParam vodParam = monitorServer.publishVodMonitor(vodMonitorForm);
 		
 	    mav.addObject("vodParam", vodMonitorForm );

@@ -34,7 +34,8 @@ public class QueryTimeParamUtils {
 			
 							" -i " + queryTimeParam.getDownLoadFile().getAbsolutePath() +
 							
-							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
+							" -c:v libx264 -b:v 50k -r 15 -loglevel quiet -an -f mp4 "+
+							//" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
 							
 							queryTimeParam.getTranscodedFile().getAbsolutePath();
 			
@@ -61,7 +62,8 @@ public class QueryTimeParamUtils {
 			
 							queryTimeParam.getDownLoadFile().getAbsolutePath() +
 							
-							" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
+							" -c:v libx264 -b:v 50k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
+							//" -c:v libx264 -b:v 128k -r 15 -threads 2 -loglevel quiet -an -f mp4 "+
 							//" -c:v copy -loglevel quiet -an -f flv " +
 							
 							queryTimeParam.getTranscodedFile().getAbsolutePath();

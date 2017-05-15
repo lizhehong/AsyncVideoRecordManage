@@ -53,7 +53,6 @@ public class TranscodingTask implements  Runnable {
 			//更新视频状态
 			queryTimeParam.setDownLoadState(DownLoadState.已经转码);
 			
-			String orignFilePath = "";
 			//删除原来文件
 			if(delOrignFile){
 				//拿到转码后的文件
@@ -62,7 +61,6 @@ public class TranscodingTask implements  Runnable {
 				String fileName = transcondedFile.getName();
 				fileName =(fileName.substring(0, fileName.indexOf(".")))+".mp4";
 				File orignFile = new File(transcondedFile.getParentFile(),fileName);
-				orignFilePath = orignFile.getAbsolutePath();
 				orignFile.delete();
 			}
 			

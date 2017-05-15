@@ -5,12 +5,11 @@
 	<meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"></meta>
     <title></title>
-    <link href="/node_modules/video.js/dist/video-js.min.css" rel="stylesheet" />
-    <link href="/node_modules/videojs-watermark-with-text/dist/videojs-watermark.css" rel="stylesheet" />
 	<link href="/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 	<style>
 		.mainVideoContrainer{
+		    background-color: black;
 		 	width: 100%;
 		 	padding: 0px;
 		}
@@ -23,26 +22,21 @@
 		#logMessage{
 			height: 600px;
 			background-color:gray;
-			overflow: scroll;
+			overflow-y: scroll;
 		}
 		#tmpVideo{
-		height: 600px;
-		width: 600px;
-			
+			display: none;
 		}
 	</style>
 <body>
-	<!-- <label for="hidid">视频id：</label>-->
+	<input type="hidden" th:value="${videoSpeedUpNum}" id="videoSpeedUpNum"/>
 	<input type="hidden" th:value="${vodParam.monitorId}" id="hidid" />
-	<!-- <label for="startTime">开始时间：</label>-->
 	<input type="hidden" th:value="${#calendars.format(vodParam.startTime,'yyyy-MM-dd HH:mm:ss')}" id="startTime" />
-	<!-- <label for="endTime">停止时间：</label>-->
 	<input type="hidden" th:value="${#calendars.format(vodParam.endTime,'yyyy-MM-dd HH:mm:ss')}" id="endTime" />
-	<!--  <button id="goBtn">开始回放：</button>-->
     <div class="container-fluid">
   	<div class="row">
   		<div class="mainVideoContrainer col-xs-12 col-sm-12 col-md-12 col-lg-8">
-  			<video id="example-video" class="vjs-default-skin" controls="controls" autoplay="autoplay"></video>
+  			<video id="example-video" class="vjs-default-skin "></video>
   		</div>
   	</div>
   	<div class="row">
@@ -50,23 +44,14 @@
   	</div>
   	<div class="row">
   		<div class="col-sm-12  col-xs-12 col-sm-12 col-md-12 col-lg-12">
-  			<video id="tmpVideo" autoplay="autoplay" controls="controls" ></video>
+  			<video id="tmpVideo"></video>
   		</div>
   	</div>
 	</div>
-    
-    
-	
-	
 </body>
 	<script type="text/javascript" src="/bower_components/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript" src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-	<script src="/node_modules/videojs-ie8/dist/videojs-ie8.js"></script>
-    <script src="/node_modules/video.js/dist/video.min.js"></script>
-    <script src="/node_modules/videojs-watermark-with-text/dist/videojs-watermark.min.js"></script>
-    <script src="/node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.min.js"></script>
+    <script type="text/javascript" src="/js/drive.js"></script>
     <script type="text/javascript" src="/js/log.js"></script>
-    <script type="text/javascript" src="/js/vod.js"></script>
- 	
-
+    <script type="text/javascript" src="/js/vodByVideoTag.js"></script>
 </html>
