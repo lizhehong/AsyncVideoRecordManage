@@ -21,6 +21,8 @@ $(document).ready(function() {
 		var openSpeedUpFlg = videoSpeedUpNum > 0;
 		var vodSpeedUpInterval = -1; 
 		var mainVideoCanplayFlag = false;
+		//播放进度为多少时 去缓存下一个视频 特别是第二次异步通知服务器时  服务器转码需要时间 所以这里建议不要太快
+		var cachePerPlayProgress = 0.1;
 		function initVideoEle(){
 			myPlayer = $("#"+videoEleId); //初始化视频
 			myPlayerJsObject = document.querySelector("#"+videoEleId);
@@ -74,10 +76,8 @@ $(document).ready(function() {
 	    		}
 	    		
 	    	});
-			//视频播放进度事件
 	    	myPlayer.on("timeupdate",function(){
-	    		//localLog.printf(localLog.createMessage(this.currentTime(),"当前文件进度"))
-	    		if(!!indexFile && this.currentTime > (indexFile.splitSecStep*0.1)){
+	    		if(!!indexFile && this.currentTime > (indexFile.splitSecStep*cachePerPlayProgress)){
 	    			var nextVideo = getVideoList()[playIndex+1];
 	    			if(!!nextVideo && !nextVideo.loaded){//视频缓存 让视频切换不卡
 		    			cacheVideo(nextVideo);
@@ -87,8 +87,8 @@ $(document).ready(function() {
 			    		var list = getVideoList();
 			    		var thisVideo = tmpPalyIndex>0?list[tmpPalyIndex]:null;
 			    		//出现网络阻塞的情况下 
-			    		for(;!thisVideo;tmpPalyIndex--){
-			    			thisVideo = list[tmpPalyIndex];
+			    		for(;!thisVideo;){
+			    			thisVideo = list[--tmpPalyIndex];
 			    		}
 			    		if(!applyPublishNextVodFlag && thisVideo.endTime+(tmpPalyIndex*indexFile.splitSecStep) < curVodParam.endTime){
 			    			var message = localLog.createMessage("开始时间："+thisVideo.endTime +"-结束时间："+ curVodParam.endTime,"异步通知服务器缓存视频开始");
@@ -147,16 +147,17 @@ $(document).ready(function() {
 		function cacheVideo(video){
 			var tmpVideo = document.querySelector("#"+tmpVideoEleId);
 			try{
-				if(!tmpVideo){
-					var videoTag = $("<video  style='width:300px;height:300px;'id='"+tmpVideoEleId+"'src='"+"/"+curVodParam.monitorId+"/"+video.fileName+"'></video>");
-					$("body").append(videoTag);
-					tmpVideo = document.querySelector("#"+tmpVideoEleId);
-				}else{
-					tmpVideo.src="/"+curVodParam.monitorId+"/"+video.fileName;
-					tmpVideo.load();
+				if(video.downLoadState == "已经转码"){//只去缓存已经转码的视频 不然会出现视频不存在的问题
+					if(!tmpVideo){
+						var videoTag = $("<video  style='width:300px;height:300px;'id='"+tmpVideoEleId+"'src='"+"/"+curVodParam.monitorId+"/"+video.fileName+"'></video>");
+						$("body").append(videoTag);
+						tmpVideo = document.querySelector("#"+tmpVideoEleId);
+					}else{
+						tmpVideo.src="/"+curVodParam.monitorId+"/"+video.fileName;
+						tmpVideo.load();
+					}
+					video.loaded = true;//相当于自锁
 				}
-				video.loaded = true;//相当于自锁
-				
 			}catch(err){
 				var message = localLog.createMessage("开始时间："+video.startTime +"-结束时间："+ video.endTime,"缓存视频列表【错误】");
 				localLog.printf(message)
@@ -175,18 +176,22 @@ $(document).ready(function() {
 		//视频播放
 		function playVideo(video) {
 	        //播放视频
-			if(!myPlayer)
-				initVideoEle();
-			//while(video.downLoadState != "已经转码");//阻塞检测
-	        var u = '/' + curVodParam.monitorId + '/' + video.fileName;
-	        myPlayer.prop("src",u);
-	        if(!mainVideoCanplayFlag){
-	        	mainVideoCanplayFlag = true;
-		        myPlayerJsObject.oncanplay = function(){
-		        	 myPlayerJsObject.play();
+			try{
+				if(!myPlayer)
+					initVideoEle();
+					myPlayerJsObject.pause();
+					var u = '/' + curVodParam.monitorId + '/' + video.fileName;
+			        myPlayer.prop("src",u);
+		        if(!mainVideoCanplayFlag){
+		        	mainVideoCanplayFlag = true;
+			        myPlayerJsObject.oncanplay = function(){
+			        	myPlayerJsObject.autoplay = true;
+			        }
 		        }
-	        }
-	        initVideoPlugin();
+		        initVideoPlugin();
+			}catch(err){
+				console.log(err)
+			}
 	  
 		}
 		/**

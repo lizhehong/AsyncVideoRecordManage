@@ -33,7 +33,10 @@ import com.sun.jna.ptr.ShortByReference;
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends StdCallLibrary {
 
-	HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("HCNetSDK", HCNetSDK.class);
+	//切记路径 用 \\
+	public static String LIB_BASE_PATH = "D:\\emv\\Eclipse\\eclipse-jee-neon-3-win32-x86_64\\workspace\\AsyncVideoRecorderManage\\winLib\\hclib\\";
+	
+	HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary(HCNetSDK.LIB_BASE_PATH+"HCNetSDK.dll", HCNetSDK.class);
 	/*** 宏定义 ***/
 	// 常量
 
@@ -3522,7 +3525,7 @@ public interface HCNetSDK extends StdCallLibrary {
 	//windows gdi接口,gdi32.dll in system32 folder, 在设置遮挡区域,移动侦测区域等情况下使用
 	interface GDI32 extends W32API
 	{
-	    GDI32 INSTANCE = (GDI32) Native.loadLibrary("gdi32", GDI32.class, DEFAULT_OPTIONS);
+	    GDI32 INSTANCE = (GDI32) Native.loadLibrary(HCNetSDK.LIB_BASE_PATH+"gdi32.dll", GDI32.class, DEFAULT_OPTIONS);
 
 	    public static final int TRANSPARENT = 1;
 
@@ -3535,7 +3538,7 @@ public interface HCNetSDK extends StdCallLibrary {
 	interface USER32 extends W32API
 	{
 
-	    USER32 INSTANCE = (USER32) Native.loadLibrary("user32", USER32.class, DEFAULT_OPTIONS);
+	    USER32 INSTANCE = (USER32) Native.loadLibrary(HCNetSDK.LIB_BASE_PATH+"user32.dll", USER32.class, DEFAULT_OPTIONS);
 
 	    public static final int BF_LEFT = 0x0001;
 	    public static final int BF_TOP = 0x0002;

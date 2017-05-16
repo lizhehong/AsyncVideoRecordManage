@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+    <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+    <link href="//vjs.zencdn.net/5.11/video-js.min.css" rel="stylesheet" />
+    <script src="//vjs.zencdn.net/5.11/video.min.js"></script>
+    <script src="https://unpkg.com/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
+    <script type="text/javascript">
+        var intInterval = 0;
+        $(document).ready(function () {
+
+        	function playVedio(id,filename) {
+	            $('#example-video').addClass('video-js');
+	            $('#hidid').val(id);
+	            //播放视频
+	            var myPlayer = videojs("example-video");  //初始化视频
+	            var u = 'http://192.168.1.192/hls/' + $('#hidid').val() + '/' + filename;
+	            myPlayer.src([{ src: u, type: 'application/x-mpegURL' }]);
+	            //myPlayer.load(u);  //使video重新加载
+	            myPlayer.play();
+	            window.clearInterval(intInterval);
+	        }
+
+        	$("#goBtn").on("click",function(){
+	            //首先开启播放
+	            $.ajax({
+	                type: 'post',
+	                async: false,
+	                url: "http://192.168.0.19:8080/monitor/publish_live",
+	                data: { ip: $('#hidip').val(), channelNum: $('#hidchannel').val(), userType: $("#streamType").val() },
+	                //dataType: 'jsonp',
+	                cache: false,
+	                success: function (data) {
+	                	alert(data.message)
+	                	intInterval = setInterval(function () { sendJump() }, 1000);
+	                }
+	            });
+	            
+		        var flag = false;
+	            function sendJump() {
+	                $.ajax({
+	                    type: 'get',
+	                    async: false,
+	                    url: "http://192.168.0.19:8080/monitor/getOne",
+	                    data: { ip: $('#hidip').val(), channelNum: $('#hidchannel').val() },
+	                    //dataType: 'jsonp',
+	                    cache: false,
+	                    success: function (data) {
+	                        console.log(data.streamState);
+	                        if (data.pushState) {
+	                           
+	                            if (data.streamState == 'update_publish' && !flag)
+	                            {
+	                            	flag = true;
+	                                playVedio(data.id, 'index.m3u8');
+	                            }
+	                        }
+	                    }
+	                });
+	            }
+	        });
+		});
+
+
+
+
+    </script>
+</head>
+<body>
+	<input type="type" id="hidid" />
+	<input type="type" value="192.168.1.104" id="hidip" />
+	<input type="type" value="1" id="hidchannel" />
+	<select id="streamType">
+		<option value ="海康">海康</option>
+		<option value =“大华”>大华</option>
+		<option value="三星">三星</option>
+		<option value="ip摄像头_海康">海康ip摄像头</option>
+		<option value="ip摄像头_大华">大华ip摄像头</option>
+		<option value="ip摄像头_三星">三星ip摄像头</option>
+	</select>
+	<button id="goBtn">go</button>
+    <video id="example-video" width=600 height=300 class="vjs-default-skin" controls></video>
+</body>
+
+
+
+</html>

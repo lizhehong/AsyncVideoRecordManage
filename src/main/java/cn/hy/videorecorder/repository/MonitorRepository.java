@@ -24,6 +24,6 @@ public interface MonitorRepository extends JpaRepository<MonitorEntity,String>{
 	public List<MonitorEntity> findByPushState(Boolean pushState);
 
 	@Query("FROM MonitorEntity WHERE streamNet.ip =?1 AND channelNum=?2 AND vrUserType=?3")
-	public MonitorEntity findOneByIpAndChannelNumAndVrUserType(String ip, Integer channelNum,VideoRecordUserType userType);
+	public MonitorEntity findFirstByIpAndChannelNumAndVrUserType(String ip, Integer channelNum,VideoRecordUserType userType);
 	
 }

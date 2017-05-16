@@ -1,7 +1,6 @@
 package cn.hy.videorecorder.server.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -12,9 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import cn.hy.videorecorder.comparator.TranscodingTaskComparator;
-import cn.hy.videorecorder.entity.type.SortDirection;
 import cn.hy.videorecorder.entity.type.VodRequestState;
+import cn.hy.videorecorder.server.TranscodingServer;
 import cn.hy.videorecorder.timer.TranscodingTask;
 
 /**
@@ -23,7 +21,7 @@ import cn.hy.videorecorder.timer.TranscodingTask;
  *
  */
 @Service("transcodingServer")
-public class TranscodingServerImpl {
+public class TranscodingServerImpl implements TranscodingServer<TranscodingTask>{
 	/**
 	 * 线程池数
 	 */
@@ -60,7 +58,7 @@ public class TranscodingServerImpl {
 			}
 		}
 		
-		Collections.sort(clientTaskList,new TranscodingTaskComparator(SortDirection.ASC));
+		//Collections.sort(clientTaskList,new TranscodingTaskComparator(SortDirection.ASC));
 		if(clientTaskList.size() > 0)
 			logger.info("ffmpeg 转码命令 排序后：{}",clientTaskList);
 		

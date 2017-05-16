@@ -106,6 +106,8 @@ public class QueryTimeParamUtils {
 	public static void storgeInfo(File parentFile,Object MemInfo) throws Exception {
 		//每次下载后都去更新索引文件
 		String jsonItem = objectMapper.writeValueAsString(MemInfo);
+		if(!parentFile.exists())
+			parentFile.mkdirs();
 		File file = new File(parentFile,"index.json");
 		OutputStream os = new FileOutputStream(file);
 		IOUtils.write(jsonItem, os );

@@ -11,7 +11,7 @@ import cn.hy.haikang.config.HCNetSDK;
 import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
-import cn.hy.videorecorder.server.impl.TranscodingServerImpl;
+import cn.hy.videorecorder.server.TranscodingServer;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 
 /**
@@ -47,9 +47,9 @@ public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAn
 	/**
 	 * 转码服务
 	 */
-	private TranscodingServerImpl transcodingServer;
+	private TranscodingServer<TranscodingTask> transcodingServer;
 	
-	public DownloadTaskAndBathTranscoding(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm,TranscodingServerImpl transcodingServer){
+	public DownloadTaskAndBathTranscoding(NativeLong lFileHandle,VodParam vodParam,QueryTimeParam timeParm,TranscodingServer<TranscodingTask> transcodingServer){
 		super();
 		this.lFileHandle = lFileHandle;
 		this.vodParam = vodParam;

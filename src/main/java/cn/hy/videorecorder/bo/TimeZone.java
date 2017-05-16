@@ -2,9 +2,12 @@ package cn.hy.videorecorder.bo;
 
 import java.util.Date;
 
+import javax.persistence.Embeddable;
+
 import lombok.Data;
 
 @Data
+@Embeddable
 public class TimeZone {
 
 	private Date startTime;
@@ -15,6 +18,10 @@ public class TimeZone {
 		super();
 		this.startTime = startTime;
 		this.endTime = endTime;
+	}
+
+	public TimeZone() {
+		super();
 	}
 	
 	

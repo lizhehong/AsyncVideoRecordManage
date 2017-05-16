@@ -155,7 +155,7 @@ public class MonitorCtr {
 			@RequestParam("userType")
 			VideoRecordUserType userType) throws Exception {
 		
-		MonitorEntity monitorEntity = monitorInfoRepository.findOneByIpAndChannelNumAndVrUserType(ip,channelNum,userType);
+		MonitorEntity monitorEntity = monitorInfoRepository.findFirstByIpAndChannelNumAndVrUserType(ip,channelNum,userType);
 		
 		if(monitorEntity == null){
 			return new ResponseEntity<MonitorResp>(new MonitorResp(monitorEntity, MonitorRespMessage.找不到对应的视频流), HttpStatus.NOT_FOUND);

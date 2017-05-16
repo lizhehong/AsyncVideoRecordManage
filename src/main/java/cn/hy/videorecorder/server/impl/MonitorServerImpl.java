@@ -18,9 +18,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
+import cn.hy.videorecorder.bo.TimeZone;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.comparator.QueryTimeParamComparator;
 import cn.hy.videorecorder.entity.MonitorEntity;
+import cn.hy.videorecorder.entity.TranscodingAndDownLoadTaskEntity;
 import cn.hy.videorecorder.entity.indentity.NetIndentity;
 import cn.hy.videorecorder.entity.indentity.UserIndentity;
 import cn.hy.videorecorder.entity.type.RtspStreamType;
@@ -28,8 +30,10 @@ import cn.hy.videorecorder.entity.type.SortDirection;
 import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 import cn.hy.videorecorder.repository.MonitorRepository;
+import cn.hy.videorecorder.repository.TranscodingAndDownLoadTaskRespotity;
 import cn.hy.videorecorder.server.MonitorServer;
 import cn.hy.videorecorder.server.SplitTimeDownLoadService;
+import cn.hy.videorecorder.server.TranscodingServer;
 import cn.hy.videorecorder.utils.QueryTimeParamUtils;
 import cn.hy.videorecorder.utils.TimeUtils;
 
@@ -55,6 +59,10 @@ public class MonitorServerImpl implements MonitorServer{
 	@Autowired
 	private MonitorRepository monitorInfoRepository;
 	
+	
+	@Autowired 
+	private TranscodingAndDownLoadTaskRespotity transcodingAndDownLoadTaskRespotity;
+	
 	@Value("${download.path}")
 	private String downLoadPath;
 	
@@ -66,6 +74,9 @@ public class MonitorServerImpl implements MonitorServer{
 	
 	@Autowired
 	private ObjectMapper objectMapper;
+	
+	@Autowired @Qualifier("transcodingByDistributedProcessServer")
+	private TranscodingServer<TranscodingAndDownLoadTaskEntity> transcodingByDistributedProcessServer;
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -234,7 +245,7 @@ public class MonitorServerImpl implements MonitorServer{
 	 * @return
 	 * @throws Exception
 	 */
-	public VodParam  publishVodMonitor(VodMonitorForm vodMonitorForm) throws Exception{
+	public synchronized VodParam  publishVodMonitor(VodMonitorForm vodMonitorForm) throws Exception{
 		
 		String monitorId = vodMonitorForm.getMonitorId();
 		
@@ -248,5 +259,17 @@ public class MonitorServerImpl implements MonitorServer{
 				return param;
 		}else
 			return startDownLoadActionToVodByNewIndexFile(vodMonitorForm);
+	}
+	/**
+	 * 分布式 发布点播任务
+	 */
+	public VodParam PublishVodMonitorByDistributedProcessing(VodMonitorForm vodMonitorForm) throws Exception{
+		
+		MonitorEntity monitorEntity = monitorInfoRepository.findOne(vodMonitorForm.getMonitorId());
+		TranscodingAndDownLoadTaskEntity transcodingTask = new TranscodingAndDownLoadTaskEntity();
+		transcodingTask.setMonitorEntity(monitorEntity);
+		transcodingTask.setTime(new TimeZone(vodMonitorForm.getStartTime(), vodMonitorForm.getEndTime()));
+		transcodingByDistributedProcessServer.addRunCmd(transcodingTask);
+		return null;
 	}
 }

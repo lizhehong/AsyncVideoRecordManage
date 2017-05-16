@@ -10,7 +10,7 @@ import com.sun.jna.win32.StdCallLibrary;
 
 //播放库函数声明,PlayCtrl.dll
 public interface PlayCtrl extends StdCallLibrary {
-	PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary("PlayCtrl", PlayCtrl.class);
+	PlayCtrl INSTANCE = (PlayCtrl) Native.loadLibrary(HCNetSDK.LIB_BASE_PATH+"PlayCtrl.dll", PlayCtrl.class);
 
 	public static final int STREAME_REALTIME = 0;
 	public static final int STREAME_FILE = 1;
