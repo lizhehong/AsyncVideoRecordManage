@@ -132,15 +132,6 @@ public class MonitorCtr {
 				return new ResponseEntity<MonitorResp>(new MonitorResp(monitorEntity, MonitorRespMessage.推流失败), HttpStatus.NOT_FOUND);
 		}
 	}
-	@ApiOperation(value = "发布一个回放视频", notes = "")
-	@CrossOrigin(origins="*")
-	@PostMapping("monitor/publish_vod")
-	public VodParam publishVodMonitor(
-			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
-		
-		return monitorServer.publishVodMonitor(vodMonitorForm);
-		
-	}
 	@ApiOperation(value = "发布一个直播视频(ip,通道,类型)", notes = "如果重复 则 拿第一个")
 	@CrossOrigin(origins="*")
 	@PostMapping("monitor/publish_live")
@@ -168,5 +159,23 @@ public class MonitorCtr {
 			else
 				return new ResponseEntity<MonitorResp>(new MonitorResp(monitorEntity, MonitorRespMessage.推流失败), HttpStatus.NOT_FOUND);
 		}
+	}
+	@ApiOperation(value = "发布一个回放视频", notes = "独立解码")
+	@CrossOrigin(origins="*")
+	@PostMapping("monitor/publish_vod")
+	public VodParam publishVodMonitor(
+			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
+		
+		return monitorServer.publishVodMonitor(vodMonitorForm);
+		
+	}
+	@ApiOperation(value = "发布一个回放视频", notes = "分布式解码")
+	@CrossOrigin(origins="*")
+	@PostMapping("monitor/publish_vod_dp")
+	public void publishVodMonitorByDistributedProcess(
+			@ApiParam(name = "vodMonitorForm", required = true, value = "点播单") @ModelAttribute VodMonitorForm vodMonitorForm) throws Exception {
+		
+		monitorServer.publishVodMonitorByDistributedProcessing(vodMonitorForm);
+		
 	}
 }

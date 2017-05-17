@@ -1,14 +1,12 @@
 package cn.hy.videorecorder.form.transcodClient;
 
-import java.io.File;
-import java.util.List;
-
 import lombok.Data;
 
 @Data
 public class TranscodedCallBackForm {
-
-	private String id;
 	
-	private List<File> outFileList;
+	private String clientId;
+	
+	//转换任务的id
+	private Long taskId;
 }

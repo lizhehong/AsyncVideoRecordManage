@@ -22,6 +22,7 @@ import cn.hy.videorecorder.bo.TimeZone;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.comparator.QueryTimeParamComparator;
 import cn.hy.videorecorder.entity.MonitorEntity;
+import cn.hy.videorecorder.entity.TranscodClientEntity;
 import cn.hy.videorecorder.entity.TranscodingAndDownLoadTaskEntity;
 import cn.hy.videorecorder.entity.indentity.NetIndentity;
 import cn.hy.videorecorder.entity.indentity.UserIndentity;
@@ -31,6 +32,7 @@ import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 import cn.hy.videorecorder.repository.MonitorRepository;
 import cn.hy.videorecorder.repository.TranscodingAndDownLoadTaskRespotity;
+import cn.hy.videorecorder.repository.TranscodingClientRepsoitory;
 import cn.hy.videorecorder.server.MonitorServer;
 import cn.hy.videorecorder.server.SplitTimeDownLoadService;
 import cn.hy.videorecorder.server.TranscodingServer;
@@ -59,9 +61,11 @@ public class MonitorServerImpl implements MonitorServer{
 	@Autowired
 	private MonitorRepository monitorInfoRepository;
 	
+	@Autowired
+	private TranscodingClientRepsoitory transcodingClientRepsoitory;
 	
-	@Autowired 
-	private TranscodingAndDownLoadTaskRespotity transcodingAndDownLoadTaskRespotity;
+	@Autowired
+	private TranscodingAndDownLoadTaskRespotity transcodingAndDownLoadTaskRespotity; 
 	
 	@Value("${download.path}")
 	private String downLoadPath;
@@ -262,14 +266,62 @@ public class MonitorServerImpl implements MonitorServer{
 	}
 	/**
 	 * 分布式 发布点播任务
+	 * 查询数据库为依据 不要索引文件
 	 */
-	public VodParam PublishVodMonitorByDistributedProcessing(VodMonitorForm vodMonitorForm) throws Exception{
-		
+	public void publishVodMonitorByDistributedProcessing(VodMonitorForm vodMonitorForm) throws Exception{
 		MonitorEntity monitorEntity = monitorInfoRepository.findOne(vodMonitorForm.getMonitorId());
-		TranscodingAndDownLoadTaskEntity transcodingTask = new TranscodingAndDownLoadTaskEntity();
-		transcodingTask.setMonitorEntity(monitorEntity);
-		transcodingTask.setTime(new TimeZone(vodMonitorForm.getStartTime(), vodMonitorForm.getEndTime()));
-		transcodingByDistributedProcessServer.addRunCmd(transcodingTask);
-		return null;
+		if( monitorEntity !=null ){
+			logger.info("进入点播列表未存在");
+			//创建任务片段
+			List<VodMonitorForm> newTaskList =  splitTimeDownLoadService.createTimeSplitTask(vodMonitorForm);
+			//任务片段迭代器
+			Iterator<VodMonitorForm> newTaskIterator = newTaskList.iterator();
+			//TODO 重复任务剔出
+			
+			//1.找到该视频下 指定时间区间的所有任务(任务阶段非空)
+			List<TranscodingAndDownLoadTaskEntity> oldTrTaskEntities = transcodingAndDownLoadTaskRespotity.findByMonitorEntityIdAndTimeStartTimeGreaterThanEqualAndTimeEndTimeLessThanEqual(vodMonitorForm.getMonitorId(), vodMonitorForm.getStartTime(), vodMonitorForm.getEndTime());
+			//视频片段去重 
+			while(newTaskIterator.hasNext()){
+				VodMonitorForm newVodMonitorForm = newTaskIterator.next();
+				boolean findOldQtr = false;
+				
+				for(TranscodingAndDownLoadTaskEntity oldTaskEntity:oldTrTaskEntities){
+					TimeZone oldTime = oldTaskEntity.getTime();
+					//找到时间相同的片段
+					if(	
+						oldTime.getStartTime().getTime() == newVodMonitorForm.getStartTime().getTime()
+						&&
+						oldTime.getEndTime().getTime() == newVodMonitorForm.getEndTime().getTime()){
+						
+						//申请视频缓存
+						findOldQtr = true;
+						break;
+					}
+				}
+				//去除时间相同的片段
+				if(findOldQtr){
+					newTaskIterator.remove();
+				}
+			}
+			
+			
+			//找到空闲转码服务器
+			List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrue();
+			for(int i=0;i<newTaskList.size();i++){
+				
+				VodMonitorForm newTask = newTaskList.get(i);
+				TranscodClientEntity client = null;
+				if( i < clientList.size() )
+					client = clientList.get(i);
+				
+				
+				TranscodingAndDownLoadTaskEntity transcodingTask = new TranscodingAndDownLoadTaskEntity();
+				transcodingTask.setMonitorEntity(monitorEntity);
+				transcodingTask.setTime(new TimeZone(newTask.getStartTime(), newTask.getEndTime()));
+				//这里必须做参数分离后 才进行转码
+				transcodingByDistributedProcessServer.asyncStartTask(transcodingTask,client);
+			}
+		}
 	}
+	
 }

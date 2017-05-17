@@ -12,11 +12,11 @@ public interface TranscodingClientRepsoitory extends JpaRepository<TranscodClien
 	 * 找到单个空闲的转码服务器
 	 * @return
 	 */
-	public TranscodClientEntity findFirstByFreeIsTrueOrderByUpdateTimeDesc();
+	public TranscodClientEntity findFirstByFreeIsTrue();
 
 	/**
 	 * 找到多个空闲的转码服务器
 	 * @return
 	 */
-	public List<TranscodClientEntity> findByFreeIsTrueOrderByUpdateTimeDesc();
+	public List<TranscodClientEntity> findByFreeIsTrue();
 }

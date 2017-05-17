@@ -1,5 +1,6 @@
 package cn.hy.videorecorder.entity;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -39,5 +40,10 @@ public class TranscodingAndDownLoadTaskEntity {
 	
 	private TimeZone time;
 
-	
+	@OneToOne(cascade=CascadeType.DETACH)
+	private TranscodClientEntity client;
+	/**
+	 * 记录文件的存放相对地址
+	 */
+	private String file;
 }

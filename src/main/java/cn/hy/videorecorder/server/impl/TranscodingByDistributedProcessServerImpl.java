@@ -1,7 +1,8 @@
 package cn.hy.videorecorder.server.impl;
 
-
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.client.AsyncRestTemplate;
 
 import cn.hy.videorecorder.bo.AsyncTranscodPackage;
@@ -51,19 +53,16 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 	 */
 	@Override
 	@Async
-	public void addRunCmd(TranscodingAndDownLoadTaskEntity task) {
+	public void asyncStartTask(TranscodingAndDownLoadTaskEntity task,TranscodClientEntity client) {
 		if(task!=null){
-			//找到空闲转码服务器
-			TranscodClientEntity client = transcodingClientRepsoitory.findFirstByFreeIsTrueOrderByUpdateTimeDesc();
 			if(client != null){
-				
 				//通知客户端转码
 				asyncNoticTranscodingClient(new AsyncTranscodPackage(task, client));
 				
 			}else{
 				//如果没有合适的转码器 则 缓存起来
-				if(!task.getTaskStep().equals(TaskStep.waiting)){//说明上一次已经进入等待过了 无需再次进入
-					
+				if(task.getTaskStep() == null || task.getTaskStep().equals(TaskStep.none)){
+					task.setTaskStep(TaskStep.waiting);
 					transcodingAndDownLoadTaskRespotity.save(task);
 					
 				}
@@ -76,25 +75,31 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 	 * 定时 唤醒等待的任务
 	 */
 	@Scheduled(fixedDelay=500)
-	public void refreshTask(){
+	public synchronized void refreshTask(){
+		
 		//找到多个转码器
-		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrueOrderByUpdateTimeDesc();
-		if(clientList.size() > 0){
-			//依据空闲的转码服务取出需要转码的任务 拿到前几个
-			Page<TranscodingAndDownLoadTaskEntity> taskPage = transcodingAndDownLoadTaskRespotity.findByTaskStepWaiting(new PageRequest(0, clientList.size()));
-			//存在转码任务
-			if(taskPage.getTotalElements() > 0){
-				
-				List<TranscodingAndDownLoadTaskEntity> taskList = taskPage.getContent();
-	
-				for(int i=0;i<clientList.size();i++){
-					TranscodClientEntity client = clientList.get(i);
-					TranscodingAndDownLoadTaskEntity task = taskList.get(i);
-					//异步通知转码客户端
-					asyncNoticTranscodingClient(new AsyncTranscodPackage(task, client));				
-				}
+		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrue();
+		if(clientList.size() == 0)
+			return ;
+		//依据空闲的转码服务取出需要转码的任务 拿到前几个
+		
+		Page<TranscodingAndDownLoadTaskEntity> taskPage = transcodingAndDownLoadTaskRespotity.findByTaskStep(TaskStep.waiting,new PageRequest(0, clientList.size()));
+		
+		//存在转码任务
+		if(taskPage.getTotalElements() > 0){
+			
+			List<TranscodingAndDownLoadTaskEntity> taskList = taskPage.getContent();
+			//大小为可用转码器的数量一致
+			for(int i=0;i<clientList.size();i++){
+				TranscodClientEntity client = clientList.get(i);
+				TranscodingAndDownLoadTaskEntity task = taskList.get(i);
+				//异步通知转码客户端
+				Long start = System.currentTimeMillis();
+				asyncNoticTranscodingClient(new AsyncTranscodPackage(task, client));
+				logger.info("Time:{}",System.currentTimeMillis()-start);
 			}
 		}
+		
 	}
 	
 	/**
@@ -104,22 +109,27 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 	 */
 	private void asyncNoticTranscodingClient(AsyncTranscodPackage reqPackage){
 		
+		TranscodClientEntity client = reqPackage.getClient();
+		client.setFree(false);
+		transcodingClientRepsoitory.save(client);//切记要这一步
+		
 		TranscodingAndDownLoadTaskEntity task = reqPackage.getTask();
 		
 		task.setTaskStep(TaskStep.asyncTranscoding);
+		task.setClient(client);
 		
+		
+		
+		//client 已经级联更新
 		transcodingAndDownLoadTaskRespotity.save(task);
-		
-		TranscodClientEntity client = reqPackage.getClient();
-		client.setFree(false);
-		
-		transcodingClientRepsoitory.save(client);
+	
 		
 		NetIndentity net = client.getClientNet();
 		
 		//拼接点播端转码地址
 		String transcodingServerUrl = "http://"+net.getIp()+":"+net.getPort()+"/vod/transcod";
 		
+		//不同视频录像机采用不同的controller
 		switch(task.getMonitorEntity().getVrUserType()){
 			case 海康:
 				transcodingServerUrl+="/hk";
@@ -129,17 +139,22 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 				break;
 		}
 		
-		
-		HttpHeaders headers = new HttpHeaders();
-
-		headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-
-		headers.add("Accept", MediaType.APPLICATION_JSON_UTF8.toString());
-		
-		HttpEntity<TranscodingAndDownLoadTaskEntity> requestEntity = new HttpEntity<>(task, headers);
+		HttpEntity<TranscodingAndDownLoadTaskEntity> requestEntity = new HttpEntity<>(task, new HttpHeaders());
 		//既然异步 则不理会返回值
-		asyncRestTemplate.postForEntity(transcodingServerUrl,requestEntity,null);
+		ListenableFuture<ResponseEntity<String>> listenableFuture = asyncRestTemplate.postForEntity(transcodingServerUrl,requestEntity,String.class);
+		
+		try {
+			ResponseEntity<String> resp = listenableFuture.get(10, TimeUnit.SECONDS);
+			logger.info("resp:{}",resp.getBody());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 			
+	}
+
+	@Override
+	public void asyncStartTask(TranscodingAndDownLoadTaskEntity transcodingTask) {
+		throw new AbstractMethodError("方法没有实现");
 	}
 }

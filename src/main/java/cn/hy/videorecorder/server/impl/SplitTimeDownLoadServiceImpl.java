@@ -18,6 +18,7 @@ import cn.hy.haikang.type.DownLoadState;
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
 import cn.hy.videorecorder.entity.type.VodRequestState;
+import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 import cn.hy.videorecorder.schdule.DownLoadTranscoding;
 import cn.hy.videorecorder.server.SplitTimeDownLoadService;
 import cn.hy.videorecorder.timer.DownLoadTaskAndSplitFileTranscoding;
@@ -43,6 +44,9 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 	
 	@Value("${cache.videoList.cacheMaxCount}")
 	private Integer cacheMaxCount;
+	
+	@Value("${download.haikang.downloadTimeSplitSec}")
+	private Integer haikangDownloadTimeSplitSec;
 	
 	/**
 	 * 固定线程数 同时N个下载任务
@@ -74,7 +78,14 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 			vodParam.getQueryTimeParams().add(queryTimeParam);
 		}
 	}
-	
+	@Override
+	public List<VodMonitorForm> createTimeSplitTask(VodMonitorForm vodMonitorForm) throws Exception {
+		
+		List<VodMonitorForm> vodMonitorForms = TimeUtils.fillFullMinAndSplitTime(vodMonitorForm, haikangDownloadTimeSplitSec, cacheMaxCount);
+
+		
+		return vodMonitorForms;
+	}
 	public int applyCacheReVideo(int cacheCount, int cacheMaxCount, Date startTime, QueryTimeParam queryTimeParam) {
 		if(cacheCount > 0 && cacheCount < cacheMaxCount){//说明已经找到了第一个
 			queryTimeParam.setVodReqState(VodRequestState.已经请求);
@@ -103,6 +114,8 @@ public class SplitTimeDownLoadServiceImpl implements SplitTimeDownLoadService {
 			e.printStackTrace();
 		}
 	}
+
+	
 
 
 }

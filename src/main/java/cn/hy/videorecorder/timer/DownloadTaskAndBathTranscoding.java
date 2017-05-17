@@ -96,7 +96,7 @@ public class DownloadTaskAndBathTranscoding implements  CallableI<DownloadTaskAn
     				//logger.info("转码开始：{}",timeParm);
     				String ffmpegCmdStr = QueryTimeParamUtils.transcodingWithGenernatorCmd(timeParm);
     				if(!StringUtils.isEmpty(ffmpegCmdStr)){
-    					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,true));
+    					transcodingServer.asyncStartTask(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,true));
     				}
     			}
     			return null;

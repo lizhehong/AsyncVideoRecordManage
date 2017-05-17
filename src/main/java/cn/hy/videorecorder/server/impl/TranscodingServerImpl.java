@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import cn.hy.videorecorder.entity.TranscodClientEntity;
 import cn.hy.videorecorder.entity.type.VodRequestState;
 import cn.hy.videorecorder.server.TranscodingServer;
 import cn.hy.videorecorder.timer.TranscodingTask;
@@ -33,7 +34,7 @@ public class TranscodingServerImpl implements TranscodingServer<TranscodingTask>
 	
 	private List<TranscodingTask> transcodingTasks = new ArrayList<>();	
 	
-	public void addRunCmd(TranscodingTask transcodingTask){
+	public void asyncStartTask(TranscodingTask transcodingTask){
 		
 		//这里其实有一部分逻辑
 		//对于客户来说其实既然是时间段点播 那么最近的时间段才是他想要的 它不在乎其他的下载进度 也就是转码进度
@@ -69,6 +70,11 @@ public class TranscodingServerImpl implements TranscodingServer<TranscodingTask>
 			executorService.execute(iterator.next());
 			iterator.remove();
 		}
+	}
+
+	@Override
+	public void asyncStartTask(TranscodingTask transcodingTask, TranscodClientEntity client) {
+		throw new AbstractMethodError("方法未实现");
 	}
 	
 }

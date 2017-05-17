@@ -1,5 +1,5 @@
 package cn.hy.videorecorder.entity.type;
 
 public enum TaskStep {
-	waiting,transcoding,asyncTranscoding,transcoded
+	none,waiting,asyncTranscoding,transcoded
 }

@@ -46,6 +46,7 @@ public class TranscodClientCtr {
 			throws Exception {
 		TranscodClientEntity entity = new TranscodClientEntity();
 		entity.setClientNet(net);
+		entity.setFree(true);
 		return transcodingClientRepsoitory.save(entity);
 	}
 	@ApiOperation(value = "更新转码端", notes = "",hidden=true)
@@ -60,26 +61,7 @@ public class TranscodClientCtr {
 			return  null;
 		BeanUtils.copyProperties(entity, form);
 		return transcodingClientRepsoitory.save(entity);
-	}
-	
-	@ApiOperation(value = "转码端任务完成回调", notes = "主要用于客户端程序主动请求更改状态",hidden=true)
-	@RequestMapping(value = "transcodClient/callBack", method = RequestMethod.POST)
-	public TranscodClientEntity transcodedCallBack(
-			@ApiParam(name = "transcodedCallBackForm", required = true, value = "更新 表单参数") TranscodedCallBackForm transcodedCallBackForm)
-			throws Exception {
-		if (StringUtils.isEmpty(transcodedCallBackForm.getId()))
-			return null;
-		TranscodClientEntity entity = transcodingClientRepsoitory.findOne(transcodedCallBackForm.getId());
-		if(entity == null) 
-			return  null;
-		
-		//TODO 回调逻辑
-		
-		
-		
-		return transcodingClientRepsoitory.save(entity);
-	}
-	
+	}	
 	
 	@ApiOperation(value = "分页查询转码端", notes = "")
 	@GetMapping("transcodClient/listByPage/{page}/{size}")

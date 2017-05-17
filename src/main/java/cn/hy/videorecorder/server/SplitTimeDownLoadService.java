@@ -1,9 +1,11 @@
 package cn.hy.videorecorder.server;
 
 import java.util.Date;
+import java.util.List;
 
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.VodParam;
+import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 
 public interface SplitTimeDownLoadService{
 
@@ -30,4 +32,10 @@ public interface SplitTimeDownLoadService{
 	 * @return 已经缓存的个数
 	 */
 	public int applyCacheReVideo(int cacheCount, int cacheMaxCount, Date startTime, QueryTimeParam queryTimeParam);
+	/**
+	 * 创建时间切片任务
+	 * @param vodMonitorForm
+	 * @return
+	 */
+	public List<VodMonitorForm> createTimeSplitTask(VodMonitorForm vodMonitorForm) throws Exception ;
 }

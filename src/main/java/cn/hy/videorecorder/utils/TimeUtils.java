@@ -5,12 +5,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.hy.videorecorder.bo.QueryTimeParam;
 import cn.hy.videorecorder.bo.TimeZone;
 import cn.hy.videorecorder.entity.type.VodRequestState;
+import cn.hy.videorecorder.form.monitor.VodMonitorForm;
 
 public class TimeUtils {
 
@@ -96,7 +98,7 @@ public class TimeUtils {
 			long num = (timeLong/(1000*secondStep));
 			//限制
 			if(num > cacheMaxCount)
-				num = cacheMaxCount + 1;
+				num = cacheMaxCount;
 			logger.info("切片数：{},时长：{},开始：{},结束：{}",num,timeLong,startTime,endTime);
 		
 			Calendar calendar = Calendar.getInstance();
@@ -114,14 +116,14 @@ public class TimeUtils {
 					startTime = calendar.getTime();//末尾时间作为第二次的开始时间
 				}
 				//防止步长不是整分倍
-				if(!startTime.equals(endTime)){
-					//最后的时长
-					QueryTimeParam newQueryTime = new QueryTimeParam();
-					newQueryTime.setStartTime(startTime);
-					newQueryTime.setEndTime(endTime);
-					newQueryTime.setVodReqState(VodRequestState.未请求);
-					queryTimeParams.add(newQueryTime);
-				}
+//				if(!startTime.equals(endTime)){
+//					//最后的时长
+//					QueryTimeParam newQueryTime = new QueryTimeParam();
+//					newQueryTime.setStartTime(startTime);
+//					newQueryTime.setEndTime(endTime);
+//					newQueryTime.setVodReqState(VodRequestState.未请求);
+//					queryTimeParams.add(newQueryTime);
+//				}
 			}else {//不用切片的情况下
 				queryTimeParams.add(queryTimeParam);
 			}
@@ -129,5 +131,66 @@ public class TimeUtils {
 		}
 		
 		return queryTimeParams;
+	}
+	/**
+	 * 填充整分钟再 时间段平均分割 升序排列
+	 * @param form
+	 * @param secondStep
+	 * @param cacheMaxCount
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<VodMonitorForm> fillFullMinAndSplitTime(VodMonitorForm form,int secondStep,int cacheMaxCount) throws Exception {
+		List<VodMonitorForm> vodMonitorForms = new ArrayList<>();
+		if( form.getEndTime()!=null && form.getStartTime()!=null ){	
+			//时间节点化为整分
+			Date startTime = dateArrangeToLastMin(form.getStartTime());
+			Date endTime = dateArrangeNetMin(form.getEndTime());
+			
+			//得到時間差
+			Long timeLong = endTime.getTime() - startTime.getTime();
+
+			//拿到切片个数
+			long num = (timeLong/(1000*secondStep));
+			
+			//限制切片数量
+			if(num > cacheMaxCount)
+				num = cacheMaxCount;
+			logger.info("切片数：{},时长：{},开始：{},结束：{}",num,timeLong,startTime,endTime);
+		
+			Calendar calendar = Calendar.getInstance();
+			calendar.setTime(startTime);
+			if(num > 0){
+				for(int i=0; i < num;i++){
+					
+					VodMonitorForm vodMonitorForm = new VodMonitorForm();
+					BeanUtils.copyProperties(vodMonitorForm, form);
+					
+					vodMonitorForm.setStartTime(startTime);
+					//计算结尾时间
+					calendar.add(Calendar.SECOND, secondStep);
+					vodMonitorForm.setEndTime(calendar.getTime());
+					
+					vodMonitorForms.add(vodMonitorForm);
+					startTime = calendar.getTime();//末尾时间作为第二次的开始时间
+				}
+//				//防止步长不是整分倍
+//				if(!startTime.equals(endTime)){
+//					//最后的时长
+//					VodMonitorForm vodMonitorForm = new VodMonitorForm();
+//					BeanUtils.copyProperties(vodMonitorForm, form);
+//					
+//					vodMonitorForm.setStartTime(startTime);
+//					vodMonitorForm.setEndTime(endTime);
+//					
+//					vodMonitorForms.add(vodMonitorForm);
+//				}
+			}else {//不用切片的情况下
+				vodMonitorForms.add(form);
+			}
+			
+		}
+		
+		return vodMonitorForms;
 	}
 }

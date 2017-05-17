@@ -45,4 +45,12 @@ public interface MonitorServer {
 	 * @throws Exception
 	 */
 	public VodParam  publishVodMonitor(VodMonitorForm vodMonitorForm) throws Exception;
+	
+	/**
+	 * 发布一个点播 使用分布式解码
+	 * @param vodMonitorForm
+	 * @return
+	 * @throws Exception
+	 */
+	public void publishVodMonitorByDistributedProcessing(VodMonitorForm vodMonitorForm) throws Exception;
 }

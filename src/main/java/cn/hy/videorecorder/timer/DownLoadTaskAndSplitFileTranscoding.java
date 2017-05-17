@@ -169,7 +169,7 @@ public class DownLoadTaskAndSplitFileTranscoding implements  CallableI<DownLoadT
 				
 				
 				if(!StringUtils.isEmpty(ffmpegCmdStr)){
-					transcodingServer.addRunCmd(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,false));
+					transcodingServer.asyncStartTask(new TranscodingTask(ffmpegCmdStr,timeParm,vodParam,false));
 				}
 				
 				
