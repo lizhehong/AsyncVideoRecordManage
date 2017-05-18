@@ -1,4 +1,4 @@
-package cn.hy.videorecorder.ctr.rest;
+package cn.hy.videorecorder.ctr.rest.impl;
 
 import java.util.Date;
 

@@ -43,5 +43,18 @@ public class TranscodClientEntity  implements Serializable{
 	private NetIndentity clientNet;
 	
 	private Boolean free;
+	/**
+	 * 同时转码池容量
+	 */
+	private Integer transcodPoolSize;
 	
+	/**
+	 * 下载线程池
+	 */
+	private Integer downLoadPoolSize;
+	
+	/**
+	 * 在线状态检测
+	 */
+	private Boolean online;
 }

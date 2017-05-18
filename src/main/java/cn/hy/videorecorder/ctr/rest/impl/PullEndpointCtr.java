@@ -1,4 +1,4 @@
-package cn.hy.videorecorder.ctr.rest;
+package cn.hy.videorecorder.ctr.rest.impl;
 
 /**
  * 推流客户端

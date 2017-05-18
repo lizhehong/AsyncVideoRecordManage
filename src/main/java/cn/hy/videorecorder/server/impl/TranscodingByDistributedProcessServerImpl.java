@@ -1,7 +1,6 @@
 package cn.hy.videorecorder.server.impl;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -109,9 +108,12 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 	 */
 	private void asyncNoticTranscodingClient(AsyncTranscodPackage reqPackage){
 		
+		
 		TranscodClientEntity client = reqPackage.getClient();
 		client.setFree(false);
 		transcodingClientRepsoitory.save(client);//切记要这一步
+		
+		//查询客户端是否已经达到设定的转码最大值
 		
 		TranscodingAndDownLoadTaskEntity task = reqPackage.getTask();
 		

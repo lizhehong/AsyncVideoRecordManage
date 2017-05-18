@@ -1,4 +1,4 @@
-package cn.hy.videorecorder.ctr.rest;
+package cn.hy.videorecorder.ctr.rest.impl;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cn.hy.videorecorder.entity.TranscodClientEntity;
 import cn.hy.videorecorder.entity.indentity.NetIndentity;
-import cn.hy.videorecorder.form.transcodClient.TranscodedCallBackForm;
 import cn.hy.videorecorder.form.transcodClient.UpdateOneTranscodClientForm;
 import cn.hy.videorecorder.repository.TranscodingClientRepsoitory;
 import io.swagger.annotations.ApiOperation;
@@ -88,5 +87,11 @@ public class TranscodClientCtr {
 	public void delOne(@ApiParam(name = "id", required = true) @RequestParam String id) {
 		transcodingClientRepsoitory.delete(id);
 	}
-	
+
+	@ApiOperation(value = "转码服务器在线检测", notes = "")
+	@PostMapping("transcodClient/heart")
+	public void onlineHeart(@ApiParam(name = "id", required = true) @RequestParam String id) {
+		
+		transcodingClientRepsoitory.setOnline(id);
+	}
 }

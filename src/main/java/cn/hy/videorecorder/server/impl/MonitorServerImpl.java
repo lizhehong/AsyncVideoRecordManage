@@ -303,24 +303,31 @@ public class MonitorServerImpl implements MonitorServer{
 					newTaskIterator.remove();
 				}
 			}
+			 
+			asyncTaskStart(monitorEntity, newTaskList);
+		}
+	}
+	/**
+	 * 接收到切割后信号 循环发送到转码端
+	 * @param monitorEntity
+	 * @param newTaskList
+	 */
+	private void asyncTaskStart(MonitorEntity monitorEntity, List<VodMonitorForm> newTaskList) {
+		//找到空闲转码服务器
+		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrue();
+		for(int i=0;i<newTaskList.size();i++){
+			
+			VodMonitorForm newTask = newTaskList.get(i);
+			TranscodClientEntity client = null;
+			if( i < clientList.size() )
+				client = clientList.get(i);
 			
 			
-			//找到空闲转码服务器
-			List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrue();
-			for(int i=0;i<newTaskList.size();i++){
-				
-				VodMonitorForm newTask = newTaskList.get(i);
-				TranscodClientEntity client = null;
-				if( i < clientList.size() )
-					client = clientList.get(i);
-				
-				
-				TranscodingAndDownLoadTaskEntity transcodingTask = new TranscodingAndDownLoadTaskEntity();
-				transcodingTask.setMonitorEntity(monitorEntity);
-				transcodingTask.setTime(new TimeZone(newTask.getStartTime(), newTask.getEndTime()));
-				//这里必须做参数分离后 才进行转码
-				transcodingByDistributedProcessServer.asyncStartTask(transcodingTask,client);
-			}
+			TranscodingAndDownLoadTaskEntity transcodingTask = new TranscodingAndDownLoadTaskEntity();
+			transcodingTask.setMonitorEntity(monitorEntity);
+			transcodingTask.setTime(new TimeZone(newTask.getStartTime(), newTask.getEndTime()));
+			//这里必须做参数分离后 才进行转码
+			transcodingByDistributedProcessServer.asyncStartTask(transcodingTask,client);
 		}
 	}
 	
