@@ -314,7 +314,7 @@ public class MonitorServerImpl implements MonitorServer{
 	 */
 	private void asyncTaskStart(MonitorEntity monitorEntity, List<VodMonitorForm> newTaskList) {
 		//找到空闲转码服务器
-		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrue();
+		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrueAndOnline(true);
 		for(int i=0;i<newTaskList.size();i++){
 			
 			VodMonitorForm newTask = newTaskList.get(i);

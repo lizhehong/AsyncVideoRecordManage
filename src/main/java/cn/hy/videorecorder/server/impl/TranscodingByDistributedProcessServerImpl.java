@@ -1,7 +1,8 @@
 package cn.hy.videorecorder.server.impl;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +12,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.client.AsyncRestTemplate;
 
 import cn.hy.videorecorder.bo.AsyncTranscodPackage;
@@ -70,6 +69,11 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 		}
 		
 	}
+	@PostConstruct
+	public void PostConstruct(){
+		transcodingClientRepsoitory.setOnline(false);
+	}
+	
 	/**
 	 * 定时 唤醒等待的任务
 	 */
@@ -77,9 +81,10 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 	public synchronized void refreshTask(){
 		
 		//找到多个转码器
-		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrue();
-		if(clientList.size() == 0)
+		List<TranscodClientEntity> clientList = transcodingClientRepsoitory.findByFreeIsTrueAndOnline(true);
+		if(clientList.size() == 0){
 			return ;
+		}
 		//依据空闲的转码服务取出需要转码的任务 拿到前几个
 		
 		Page<TranscodingAndDownLoadTaskEntity> taskPage = transcodingAndDownLoadTaskRespotity.findByTaskStep(TaskStep.waiting,new PageRequest(0, clientList.size()));
@@ -110,7 +115,12 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 		
 		
 		TranscodClientEntity client = reqPackage.getClient();
-		client.setFree(false);
+		TranscodClientEntity clientInDb = transcodingClientRepsoitory.findOne(client.getId());
+		if(clientInDb.getNowDownLoadSize() < clientInDb.getDownLoadPoolSize()){
+			client.setNowDownLoadSize(clientInDb.getNowDownLoadSize()+1);
+			client.setFree(true);
+		}else
+			client.setFree(false);
 		transcodingClientRepsoitory.save(client);//切记要这一步
 		
 		//查询客户端是否已经达到设定的转码最大值
@@ -120,9 +130,6 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 		task.setTaskStep(TaskStep.asyncTranscoding);
 		task.setClient(client);
 		
-		
-		
-		//client 已经级联更新
 		transcodingAndDownLoadTaskRespotity.save(task);
 	
 		
@@ -142,15 +149,9 @@ public class TranscodingByDistributedProcessServerImpl implements TranscodingSer
 		}
 		
 		HttpEntity<TranscodingAndDownLoadTaskEntity> requestEntity = new HttpEntity<>(task, new HttpHeaders());
-		//既然异步 则不理会返回值
-		ListenableFuture<ResponseEntity<String>> listenableFuture = asyncRestTemplate.postForEntity(transcodingServerUrl,requestEntity,String.class);
+
+		asyncRestTemplate.postForEntity(transcodingServerUrl,requestEntity,String.class);
 		
-		try {
-			ResponseEntity<String> resp = listenableFuture.get(10, TimeUnit.SECONDS);
-			logger.info("resp:{}",resp.getBody());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 		
 			
 	}

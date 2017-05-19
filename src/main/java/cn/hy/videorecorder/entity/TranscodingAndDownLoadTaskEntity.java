@@ -1,11 +1,16 @@
 package cn.hy.videorecorder.entity;
 
+import java.util.Date;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import cn.hy.videorecorder.bo.TimeZone;
 import cn.hy.videorecorder.entity.type.TaskStep;
@@ -27,6 +32,14 @@ public class TranscodingAndDownLoadTaskEntity {
 	@Id
 	@GeneratedValue
 	private Long id;
+	
+	@CreationTimestamp   
+	private Date publishTime;
+	
+	@UpdateTimestamp   
+	private Date updateTime;
+	
+	
 	/**
 	 * 对应的视频信息
 	 */

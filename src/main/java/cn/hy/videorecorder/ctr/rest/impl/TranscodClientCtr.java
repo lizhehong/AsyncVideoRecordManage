@@ -8,9 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cn.hy.videorecorder.ctr.rest.RegistServer;
 import cn.hy.videorecorder.entity.TranscodClientEntity;
 import cn.hy.videorecorder.entity.indentity.NetIndentity;
 import cn.hy.videorecorder.form.transcodClient.UpdateOneTranscodClientForm;
@@ -32,7 +33,7 @@ import io.swagger.annotations.ApiParam;
  *
  */
 @RestController
-public class TranscodClientCtr {
+public class TranscodClientCtr implements RegistServer{
 
 	@Autowired
 	private TranscodingClientRepsoitory transcodingClientRepsoitory;
@@ -74,12 +75,21 @@ public class TranscodClientCtr {
 	
 	
 	@ApiOperation(value = "获取一个转码端", notes = "根据id")
-	@CrossOrigin(origins="*")
 	@GetMapping("transcodClient/getOne/{id}")
 	public TranscodClientEntity getOne(
 			@ApiParam(name = "id", required = true, value = "视频流id") @PathVariable("id") String id) {
 		
 		return transcodingClientRepsoitory.findOne(id);
+	}
+	
+	@ApiOperation(value = "获取一个转码端", notes = "根据网络标识")
+	@GetMapping("transcodClient/getOne/byNet")
+	public TranscodClientEntity getOneByNet(
+			@ApiParam(name = "id", required = true, value = "视频流id") 
+			@ModelAttribute
+			NetIndentity net) {
+		
+		return transcodingClientRepsoitory.findFirstByClientNet(net);
 	}
 	
 	@ApiOperation(value = "删除转码端", notes = "",hidden=true)
@@ -88,10 +98,22 @@ public class TranscodClientCtr {
 		transcodingClientRepsoitory.delete(id);
 	}
 
+	@Override
 	@ApiOperation(value = "转码服务器在线检测", notes = "")
 	@PostMapping("transcodClient/heart")
-	public void onlineHeart(@ApiParam(name = "id", required = true) @RequestParam String id) {
-		
-		transcodingClientRepsoitory.setOnline(id);
+	public void heart(@ApiParam(name = "id", required = true) @RequestParam String id) {
+		transcodingClientRepsoitory.setOnline(id,true);
+	}
+	@Override
+	@ApiOperation(value = "转码服务器登录", notes = "")
+	@GetMapping("transcodClient/login/{id}")
+	public void login(@ApiParam(name = "id", required = true) @PathVariable("id") String id) {
+		heart(id);
+	}
+	@Override
+	@ApiOperation(value = "转码服务器离线", notes = "")
+	@GetMapping("transcodClient/logout/{id}")
+	public void logout(@ApiParam(name = "id", required = true)@PathVariable("id") String id) {
+		transcodingClientRepsoitory.setOnline(id,false);
 	}
 }

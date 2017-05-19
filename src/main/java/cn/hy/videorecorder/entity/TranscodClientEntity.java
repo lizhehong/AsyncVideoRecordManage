@@ -3,6 +3,7 @@ package cn.hy.videorecorder.entity;
 import java.io.Serializable;
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -46,11 +47,14 @@ public class TranscodClientEntity  implements Serializable{
 	/**
 	 * 同时转码池容量
 	 */
+	@Column(nullable=false)
 	private Integer transcodPoolSize;
-	
+	@Column(nullable=false)
+	private Integer nowDownLoadSize;
 	/**
 	 * 下载线程池
 	 */
+	@Column(nullable=false)
 	private Integer downLoadPoolSize;
 	
 	/**

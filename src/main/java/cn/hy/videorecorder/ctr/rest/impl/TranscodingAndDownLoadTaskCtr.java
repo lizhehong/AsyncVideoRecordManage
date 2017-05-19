@@ -2,9 +2,7 @@ package cn.hy.videorecorder.ctr.rest.impl;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,9 +56,7 @@ public class TranscodingAndDownLoadTaskCtr {
 		if(task == null) 
 			return;
 		
-		TranscodClientEntity client = transcodingClientRepsoitory.findOne(transcodedCallBackForm.getClientId());
-		if(client == null)
-			return;
+		
 		
 		//任务状态转换
 		task.setTaskStep(TaskStep.transcoded);
@@ -82,11 +77,19 @@ public class TranscodingAndDownLoadTaskCtr {
 		IOUtils.closeQuietly(in);
 		IOUtils.closeQuietly(out);
 		
-		transcodingAndDownLoadTaskRespotity.save(task);
-		//客户端状态转换
+		synchronized (out) {//回调是高并发的东西 
+			TranscodClientEntity client = transcodingClientRepsoitory.findOne(transcodedCallBackForm.getClientId());
+			transcodingAndDownLoadTaskRespotity.save(task);
+			if(client == null)
+				return;
+			logger.info("当前值：{},",client.getNowDownLoadSize());
+			client.setNowDownLoadSize( client.getNowDownLoadSize() - 1);
+			client.setFree(true);
+			transcodingClientRepsoitory.save(client);
+		}
 		
-		client.setFree(true);
-		transcodingClientRepsoitory.save(client);
+		
+		
 	}
 	
 }
